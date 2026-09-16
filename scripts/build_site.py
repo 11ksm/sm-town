@@ -71,6 +71,15 @@ def build(scores: pd.DataFrame, universe: pd.DataFrame):
             if x["chg"] == "NEW" or (isinstance(x["chg"], int) and x["chg"] >= config.NEW_PICK_RANK_JUMP):
                 new_picks.append(x["t"])
 
+    us = None
+    us_path = os.path.join(config.DATA_DIR, "us_market.json")
+    if os.path.exists(us_path):
+        try:
+            with open(us_path, encoding="utf-8") as f:
+                us = json.load(f)
+        except Exception:
+            us = None
+
     excluded = universe[universe["excluded"]]
     payload = {
         "updated": datetime.now(KST).strftime("%Y-%m-%d %H:%M KST"),
@@ -86,6 +95,7 @@ def build(scores: pd.DataFrame, universe: pd.DataFrame):
         "new_picks": new_picks,
         "perf": perf,
         "snapshots": snapshots,
+        "us": us,
     }
 
     with open(TEMPLATE, encoding="utf-8") as f:
