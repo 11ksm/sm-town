@@ -6,8 +6,9 @@
 <title>KR Stock Radar · 수원WM</title>
 <style>
 :root{--navy:#0b1f3a;--orange:#e8621f;--bg:#f4f6f9;--card:#fff;--line:#e3e7ee;--text:#1b1f27;--muted:#6b7280;
-  --up:#d1440f;--down:#1c56c9;--chip:#eef1f6}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f141c;--card:#171e29;--line:#273140;--text:#e6e9ef;--muted:#98a2b3;--chip:#222b38}}
+  --up:#d1440f;--down:#1c56c9;--chip:#eef1f6;--zebra:#fafbfd;
+  --gA:#1f9d55;--gB:#2f80ed;--gC:#b7791f;--gD:#8a8f98}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f141c;--card:#171e29;--line:#273140;--text:#e6e9ef;--muted:#98a2b3;--chip:#222b38;--zebra:#1a2230}}
 *{box-sizing:border-box}
 body{margin:0;font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;background:var(--bg);color:var(--text)}
 header{background:var(--navy);color:#fff;padding:18px 16px}
@@ -15,47 +16,75 @@ header h1{margin:0;font-size:19px;display:flex;align-items:center;gap:8px}
 header .sub{font-size:12px;opacity:.75;margin-top:4px}
 .badge{background:var(--orange);color:#fff;font-size:10px;padding:2px 7px;border-radius:9px}
 main{max-width:1100px;margin:0 auto;padding:12px}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:12px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:12px}
 .stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
 .stat .k{font-size:11px;color:var(--muted)}.stat .v{font-size:17px;font-weight:700;margin-top:2px}
+.stat.link{cursor:pointer;border-color:var(--orange)}
+.stat.link .k{color:var(--orange)}
+.stat.link:hover{background:#fff7f2}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
-.tab{border:1px solid var(--line);background:var(--card);padding:7px 12px;border-radius:20px;font-size:13px;cursor:pointer;color:var(--text)}
+.tab{border:1px solid var(--line);background:var(--card);padding:8px 13px;border-radius:20px;font-size:13px;cursor:pointer;color:var(--text)}
 .tab.on{background:var(--navy);color:#fff;border-color:var(--navy)}
 .tab .cnt{background:var(--orange);color:#fff;border-radius:9px;padding:0 6px;font-size:10px;margin-left:4px}
 .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
-.filters select,.filters input{border:1px solid var(--line);background:var(--card);color:var(--text);padding:7px 10px;border-radius:8px;font-size:13px}
+.filters select,.filters input{border:1px solid var(--line);background:var(--card);color:var(--text);padding:8px 10px;border-radius:8px;font-size:13px}
 .filters input{flex:1;min-width:140px}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
-.seg button{border:0;background:var(--card);color:var(--text);padding:7px 11px;font-size:12px;cursor:pointer}
+.seg button{border:0;background:var(--card);color:var(--text);padding:8px 11px;font-size:12px;cursor:pointer}
 .seg button.on{background:var(--orange);color:#fff}
 .note{background:#fff7ed;border:1px solid #fed7aa;color:#7c4a1e;border-radius:8px;padding:9px 12px;font-size:12px;line-height:1.5;margin-bottom:10px}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .note{background:#2a1f14;border-color:#5a3a1f;color:#f3c9a8}}
 .wrap{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:10px}
-table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:960px}
-th,td{padding:7px 6px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
-th{background:var(--chip);color:var(--muted);font-size:11px;cursor:pointer;position:sticky;top:0;user-select:none}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:820px}
+th,td{padding:10px 8px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:middle}
+tbody tr:nth-child(even){background:var(--zebra)}
+th{background:var(--chip);color:var(--muted);font-size:11.5px;cursor:pointer;position:sticky;top:0;user-select:none}
 th.sorted{color:var(--orange)}
-td.name{text-align:left;font-weight:600}
-td.name a{color:inherit;text-decoration:none;border-bottom:1px dashed #9aa5b5}
+td.name{text-align:left}
+td.name a{color:inherit;text-decoration:none;font-weight:700;font-size:14px}
 td.name a:hover{color:var(--orange)}
-td.name .sec{display:block;font-size:10px;color:var(--muted);font-weight:400}
-.total{color:var(--orange);font-weight:800;font-size:14px}
-.chip{display:inline-block;padding:2px 7px;border-radius:9px;font-size:11px;font-weight:700}
+td.name .code{color:var(--muted);font-weight:400;font-size:11px;margin-left:4px}
+td.name .sec{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+.rk{font-weight:700;font-size:15px}
+.total{font-weight:800;font-size:18px;line-height:1}
+.grade{display:inline-block;margin-top:4px;padding:1px 8px;border-radius:9px;font-size:10.5px;font-weight:700;color:#fff}
+.gA{background:var(--gA)}.gB{background:var(--gB)}.gC{background:var(--gC)}.gD{background:var(--gD)}
+.chip{display:inline-block;padding:2px 7px;border-radius:9px;font-size:11px;font-weight:700;margin-top:3px}
 .up{background:#ffece3;color:var(--up)}.down{background:#e6f0ff;color:var(--down)}.flat{background:var(--chip);color:var(--muted)}.new{background:var(--orange);color:#fff}
 .pos{color:var(--up)}.neg{color:var(--down)}
-.star{cursor:pointer;font-size:16px;color:#c5ccd6}.star.on{color:#f5a623}
-.ev{display:inline-block;max-width:120px;overflow:hidden;text-overflow:ellipsis;font-size:11px;color:var(--muted)}
+.sub2{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+.star{cursor:pointer;font-size:18px;color:#c5ccd6}.star.on{color:#f5a623}
 .mini{display:block;margin:0 auto}
+.bars{display:grid;grid-template-columns:34px 70px 26px;gap:2px 6px;align-items:center;font-size:10.5px;text-align:left}
+.bars .lb{color:var(--muted)}
+.bars .bar{height:7px;background:var(--chip);border-radius:4px;overflow:hidden}
+.bars .bar i{display:block;height:100%;background:var(--orange);border-radius:4px}
+.bars .bar i.ev{background:#7c3aed}.bars .bar i.rk{background:#1f9d55}
+.bars .num{font-weight:600;text-align:right}
+.ev{display:inline-block;max-width:150px;overflow:hidden;text-overflow:ellipsis;font-size:11.5px;color:#7c3aed;font-weight:600}
 .empty{padding:30px;text-align:center;color:var(--muted);font-size:13px}
 .hist{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px}
 .card h3{margin:0 0 8px;font-size:13px;color:var(--muted)}
-.card ol{margin:0;padding-left:18px;font-size:12.5px;line-height:1.7}
+.card ol{margin:0;padding-left:18px;font-size:13px;line-height:1.8}
 .perf{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-bottom:12px}
 .perf .v{font-size:20px;font-weight:800}
 .perf small{color:var(--muted);font-size:11px;display:block}
 footer{text-align:center;color:var(--muted);font-size:11px;padding:24px}
-.legend{font-size:11px;color:var(--muted);margin:6px 2px}
+.legend{font-size:11.5px;color:var(--muted);margin:6px 2px}
+.legend b{color:var(--orange);cursor:pointer;text-decoration:underline dotted}
+/* modal */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;padding:20px 12px;overflow-y:auto;z-index:50}
+.ov.on{display:flex}
+.md{background:var(--card);color:var(--text);border-radius:14px;max-width:760px;width:100%;padding:20px 22px;font-size:13.5px;line-height:1.65;position:relative}
+.md h2{margin:0 0 6px;font-size:18px}
+.md h3{margin:18px 0 6px;font-size:14px;color:var(--orange)}
+.md table{min-width:0;font-size:12.5px}
+.md th,.md td{padding:7px 8px;white-space:normal;text-align:left;position:static}
+.md .x{position:absolute;right:14px;top:12px;border:0;background:var(--chip);color:var(--text);border-radius:50%;width:30px;height:30px;font-size:16px;cursor:pointer}
+.md ul{padding-left:18px;margin:4px 0}
+.md .warn{background:#fff7ed;border-left:3px solid var(--orange);padding:8px 12px;border-radius:6px;font-size:12.5px;color:#7c4a1e}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .md .warn{background:#2a1f14;color:#f3c9a8}}
 </style>
 </head>
 <body>
@@ -72,23 +101,24 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:24px}
     <button class="tab" data-tab="new">오늘의 신규 포착 <span class="cnt" id="cntNew">0</span></button>
     <button class="tab" data-tab="fav">즐겨찾기 <span class="cnt" id="cntFav">0</span></button>
     <button class="tab" data-tab="hist">히스토리 · 성과검증</button>
+    <button class="tab" data-tab="guide">점수 해석 가이드</button>
   </div>
 
   <div id="panelTable">
     <div class="filters">
       <div class="seg" id="mkt"><button data-v="" class="on">전체</button><button data-v="KOSPI">코스피</button><button data-v="KOSDAQ">코스닥</button></div>
       <select id="sector"><option value="">전체 업종</option></select>
+      <div class="seg" id="grade"><button data-v="" class="on">전체 등급</button><button data-v="A">A</button><button data-v="B">B+</button></div>
       <div class="seg" id="lim"><button data-v="50" class="on">TOP 50</button><button data-v="100">TOP 100</button><button data-v="0">전체</button></div>
       <input id="q" placeholder="종목명 / 코드 검색">
     </div>
-    <div class="legend">레이더 5축(시계방향): 수급 → 기술 → 재료 → 실적 → 리스크(낮을수록 높은 점수) · 열 제목 클릭으로 정렬 · ★ 클릭으로 즐겨찾기(이 브라우저에만 저장)</div>
+    <div class="legend">등급 A ≥70 · B 60~70 · C 50~60 · D &lt;50 — <b id="openGuide">가중치·등급 기준 보기</b> · 열 제목 클릭 정렬 · ★ 즐겨찾기(이 브라우저에만 저장)</div>
     <div class="wrap">
       <table id="tbl">
         <thead><tr>
-          <th data-k="fav">★</th><th data-k="rank">순위</th><th data-k="chg">변동</th><th data-k="n">종목명 / 업종</th><th data-k="m">시장</th>
-          <th data-k="close">현재가</th><th data-k="d1">등락</th><th data-k="total">종합</th><th>레이더</th>
-          <th data-k="ax0">수급</th><th data-k="ax1">기술</th><th data-k="ax2">재료</th><th data-k="ax3">실적</th><th data-k="ax4">리스크</th>
-          <th data-k="sr">업종내</th><th data-k="streak">연속매수</th><th data-k="n52">52주高</th><th data-k="r20">20일</th><th>재료 내용</th>
+          <th data-k="fav">★</th><th data-k="rank">순위</th><th data-k="n">종목</th>
+          <th data-k="close">현재가</th><th data-k="total">종합점수</th><th>레이더</th><th data-k="ax0">축별 점수</th>
+          <th data-k="streak">수급</th><th data-k="r20">20일 수익률</th><th data-k="sr">업종 내</th><th>재료</th>
         </tr></thead>
         <tbody id="tbody"></tbody>
       </table>
@@ -100,36 +130,48 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:24px}
     <div class="perf" id="perf"></div>
     <div class="hist" id="snap"></div>
   </div>
+
+  <div id="panelGuide" style="display:none" class="card"></div>
 </main>
 <footer>KR Stock Radar · GitHub Actions 자동 생성 · 데이터: KRX, DART, 네이버금융</footer>
+
+<div class="ov" id="ov"><div class="md"><button class="x" id="closeMd">×</button><div id="mdBody"></div></div></div>
 
 <script>
 const D = __DATA__;
 const FAV_KEY = "krsr:fav";
 let fav = new Set(); try { fav = new Set(JSON.parse(localStorage.getItem(FAV_KEY) || "[]")); } catch(e) {}
 function saveFav(){ try { localStorage.setItem(FAV_KEY, JSON.stringify([...fav])); } catch(e) {} }
+const AXN = {supply:"수급",technical:"기술",event:"재료",fundamental:"실적",risk:"리스크"};
+const AXL = ["수급","기술","재료","실적","리스크"];
+let state = { tab:"all", mkt:"", sector:"", grade:"", lim:50, q:"", sortK:"rank", sortAsc:true };
 
-let state = { tab:"all", mkt:"", sector:"", lim:50, q:"", sortK:"rank", sortAsc:true };
+const gradeOf = t => t>=70?"A":t>=60?"B":t>=50?"C":"D";
+const gradeName = {A:"우선 검토",B:"관심",C:"관찰",D:"보류"};
 
 document.getElementById("updated").textContent = D.updated;
-const stats = document.getElementById("stats");
 const exc = Object.entries(D.excluded_breakdown||{}).map(([k,v])=>`${k} ${v}`).join(" · ") || "-";
-stats.innerHTML = [
-  ["분석 종목", `${D.scored_total.toLocaleString()} <small style="font-size:11px;color:var(--muted)">/ 전체 ${D.universe_total.toLocaleString()}</small>`],
-  ["자동 제외", `${D.excluded_total} <small style="font-size:10px;color:var(--muted)">${exc}</small>`],
-  ["신규 포착", `${D.new_picks.length}종목`],
-  ["가중치", Object.entries(D.weights).map(([k,v])=>`${{supply:"수급",technical:"기술",event:"재료",fundamental:"실적",risk:"리스크"}[k]} ${Math.round(v*100)}%`).join(" · ")],
-].map(([k,v])=>`<div class="stat"><div class="k">${k}</div><div class="v" style="${k==='가중치'?'font-size:12px;font-weight:600':''}">${v}</div></div>`).join("");
+const wtxt = Object.entries(D.weights).map(([k,v])=>`${AXN[k]} ${Math.round(v*100)}%`).join(" · ");
+document.getElementById("stats").innerHTML = [
+  ["분석 종목", `${D.scored_total.toLocaleString()} <small style="font-size:11px;color:var(--muted)">/ 전체 ${D.universe_total.toLocaleString()}</small>`,""],
+  ["자동 제외", `${D.excluded_total} <small style="font-size:10px;color:var(--muted)">${exc}</small>`,""],
+  ["오늘의 신규 포착", `${D.new_picks.length}종목`,""],
+  ["가중치 · 산출 기준 보기 ⓘ", `<span style="font-size:12px;font-weight:600">${wtxt}</span>`,"link"],
+].map(([k,v,c])=>`<div class="stat ${c}" ${c?'id="wStat"':''}><div class="k">${k}</div><div class="v">${v}</div></div>`).join("");
 
 const secSel = document.getElementById("sector");
 D.sectors.forEach(s=>{ const o=document.createElement("option"); o.value=s; o.textContent=s; secSel.appendChild(o); });
 
 function radar(ax){
-  const n=5, cx=26, cy=26, r=20;
+  const n=5, cx=27, cy=27, r=21;
   const pt=(v,i)=>{ const a=-Math.PI/2 + i*2*Math.PI/n; const d=r*Math.max(0,Math.min(100,v||0))/100; return `${(cx+d*Math.cos(a)).toFixed(1)},${(cy+d*Math.sin(a)).toFixed(1)}`; };
   const g=[...Array(n).keys()].map(i=>pt(100,i)).join(" ");
   const p=ax.map((v,i)=>pt(v,i)).join(" ");
-  return `<svg class="mini" width="52" height="52" viewBox="0 0 52 52" title="수급 ${ax[0]} · 기술 ${ax[1]} · 재료 ${ax[2]} · 실적 ${ax[3]} · 리스크 ${ax[4]}"><polygon points="${g}" fill="none" stroke="#c9d0da" stroke-width="1"/><polygon points="${p}" fill="rgba(232,98,31,.35)" stroke="#e8621f" stroke-width="1.5"/></svg>`;
+  return `<svg class="mini" width="54" height="54" viewBox="0 0 54 54"><title>${AXL.map((l,i)=>`${l} ${ax[i]??'-'}`).join(" · ")}</title><polygon points="${g}" fill="none" stroke="#c9d0da" stroke-width="1"/><polygon points="${p}" fill="rgba(232,98,31,.35)" stroke="#e8621f" stroke-width="1.5"/></svg>`;
+}
+function bars(ax){
+  const cls=["","","ev","","rk"];
+  return `<div class="bars">${AXL.map((l,i)=>`<span class="lb">${l}</span><span class="bar"><i class="${cls[i]}" style="width:${Math.max(0,Math.min(100,ax[i]||0))}%"></i></span><span class="num">${ax[i]??'-'}</span>`).join("")}</div>`;
 }
 function chgChip(c){
   if(c===null||c===undefined) return `<span class="chip flat">–</span>`;
@@ -148,9 +190,11 @@ function getRows(){
   else if(state.lim>0) rows = rows.filter(r=>r.rank<=state.lim);
   if(state.mkt) rows = rows.filter(r=>r.m===state.mkt);
   if(state.sector) rows = rows.filter(r=>r.s===state.sector);
+  if(state.grade==="A") rows = rows.filter(r=>r.total>=70);
+  if(state.grade==="B") rows = rows.filter(r=>r.total>=60);
   if(state.q){ const q=state.q.toLowerCase(); rows = rows.filter(r=>r.n.toLowerCase().includes(q)||r.t.includes(q)); }
   const k=state.sortK;
-  const val=r=>{ if(k==="fav") return fav.has(r.t)?1:0; if(k.startsWith("ax")) return r.ax[+k[2]]??-1; if(k==="chg") return r.chg==="NEW"?9999:(r.chg??-9999); return r[k]??(typeof r[k]==="string"?"":-1e9); };
+  const val=r=>{ if(k==="fav") return fav.has(r.t)?1:0; if(k.startsWith("ax")) return r.ax[+k[2]]??-1; if(k==="chg") return r.chg==="NEW"?9999:(r.chg??-9999); const v=r[k]; return v===null||v===undefined?(typeof r.n==="string"&&k==="n"?"":-1e9):v; };
   rows=[...rows].sort((a,b)=>{ const x=val(a),y=val(b); const c= typeof x==="string"? x.localeCompare(y) : x-y; return state.sortAsc?c:-c; });
   return rows;
 }
@@ -158,25 +202,29 @@ function render(){
   document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.dataset.tab===state.tab));
   document.getElementById("cntNew").textContent=D.new_picks.length;
   document.getElementById("cntFav").textContent=fav.size;
-  const hist = state.tab==="hist";
-  document.getElementById("panelTable").style.display = hist?"none":"";
+  const hist = state.tab==="hist", guide = state.tab==="guide";
+  document.getElementById("panelTable").style.display = (hist||guide)?"none":"";
   document.getElementById("panelHist").style.display = hist?"":"none";
+  document.getElementById("panelGuide").style.display = guide?"":"none";
   document.getElementById("lim").style.visibility = (state.tab==="all")?"visible":"hidden";
   if(hist){ renderHist(); return; }
+  if(guide){ document.getElementById("panelGuide").innerHTML = guideHTML(); return; }
   document.querySelectorAll("#tbl th").forEach(th=>th.classList.toggle("sorted",th.dataset.k===state.sortK));
   const rows=getRows();
   document.getElementById("empty").style.display = rows.length?"none":"";
-  document.getElementById("tbody").innerHTML = rows.map(r=>`<tr>
+  document.getElementById("tbody").innerHTML = rows.map(r=>{ const g=gradeOf(r.total); return `<tr>
     <td><span class="star ${fav.has(r.t)?'on':''}" data-t="${r.t}">${fav.has(r.t)?'★':'☆'}</span></td>
-    <td>${r.rank}</td><td>${chgChip(r.chg)}</td>
-    <td class="name"><a href="https://finance.naver.com/item/main.naver?code=${r.t}" target="_blank" rel="noopener">${r.n}</a> <span style="color:var(--muted);font-weight:400;font-size:11px">${r.t}</span><span class="sec">${r.s||''}${r.cap?` · ${r.cap.toLocaleString()}억`:''}</span></td>
-    <td>${r.m==="KOSPI"?"코스피":"코스닥"}</td>
-    <td>${fmt(r.close)}</td><td>${signed(r.d1)}</td>
-    <td class="total">${fmt(r.total)}</td><td>${radar(r.ax)}</td>
-    <td>${fmt(r.ax[0])}</td><td>${fmt(r.ax[1])}</td><td>${fmt(r.ax[2])}</td><td>${fmt(r.ax[3])}</td><td>${fmt(r.ax[4])}</td>
-    <td>${r.sr?`${r.sr}/${r.ss}`:"-"}</td><td>${r.streak?r.streak+"일":"-"}</td><td>${fmt(r.n52,"%")}</td><td>${signed(r.r20)}</td>
-    <td><span class="ev" title="${r.ev||''}">${r.ev||'-'}</span></td>
-  </tr>`).join("");
+    <td><div class="rk">${r.rank}</div>${chgChip(r.chg)}</td>
+    <td class="name"><a href="https://finance.naver.com/item/main.naver?code=${r.t}" target="_blank" rel="noopener">${r.n}</a><span class="code">${r.t}</span><span class="sec">${r.m==="KOSPI"?"코스피":"코스닥"} · ${r.s||'기타'}${r.cap?` · ${r.cap.toLocaleString()}억`:''}</span></td>
+    <td>${fmt(r.close)}<span class="sub2">${signed(r.d1)}</span></td>
+    <td><div class="total" style="color:var(--g${g})">${fmt(r.total)}</div><span class="grade g${g}">${g} · ${gradeName[g]}</span></td>
+    <td>${radar(r.ax)}</td>
+    <td>${bars(r.ax)}</td>
+    <td>${r.streak?`<b>${r.streak}일</b> 연속<span class="sub2">기관+외인 순매수</span>`:`<span style="color:var(--muted)">-</span>`}</td>
+    <td>${signed(r.r20)}</td>
+    <td>${r.sr?`${r.sr}<span class="sub2">/ ${r.ss}종목</span>`:"-"}</td>
+    <td><span class="ev" title="${r.ev||''}">${r.ev||'<span style="color:var(--muted);font-weight:400">-</span>'}</span></td>
+  </tr>`;}).join("");
 }
 function renderHist(){
   const P=document.getElementById("perf");
@@ -187,12 +235,52 @@ function renderHist(){
   }).join("") : `<div class="card"><div class="v" style="font-size:13px;color:var(--muted)">첫 실행 이후 데이터가 누적되면 표시됩니다.</div></div>`;
   document.getElementById("snap").innerHTML = D.snapshots.map(s=>`<div class="card"><h3>${s.date} 상위 10</h3><ol>${s.items.map(i=>`<li><a style="color:inherit;text-decoration:none" href="https://finance.naver.com/item/main.naver?code=${i.ticker}" target="_blank">${i.name}</a> <span style="color:var(--muted);font-size:11px">${i.total}</span></li>`).join("")}</ol></div>`).join("") || `<div class="card empty">히스토리가 아직 없습니다.</div>`;
 }
+function guideHTML(){
+  const w=D.weights, pct=k=>Math.round(w[k]*100)+"%";
+  return `
+<h2>점수 산출 방식과 해석 가이드</h2>
+<p>모든 축은 <b>스크리닝 대상 전 종목 중 백분위(0~100)</b>입니다. 예: 수급 85점 = 상위 15%. 종합점수는 5개 축의 가중 평균이므로 <b>절대적 확률이 아닌 시장 내 상대 순위</b>를 뜻합니다.</p>
+<h3>5개 축 · 가중치</h3>
+<table><thead><tr><th>축</th><th>비중</th><th>무엇을 보나</th><th>출처</th></tr></thead><tbody>
+<tr><td><b>수급</b></td><td>${pct("supply")}</td><td>기관+외국인 20거래일 순매수금액을 <u>시가총액으로 나눠</u> 대형주 편향 제거(75%) + 연속 순매수 일수(25%)</td><td>KRX</td></tr>
+<tr><td><b>기술</b></td><td>${pct("technical")}</td><td>5·20·60일 이동평균 정배열, RSI 50~70 모멘텀 구간(80 초과는 감점), MACD 골든크로스, 거래량 급증(20일 평균의 1.5배), 52주 신고가 근접도 → 점수화(70%) + 20일 수익률의 시장 대비 초과분(상대강도, 30%)</td><td>KRX</td></tr>
+<tr><td><b>재료</b></td><td>${pct("event")}</td><td>최근 30일 내 자기주식 <b>소각(100) &gt; 취득(80) &gt; 처분(25)</b> 공시. 공시 후 시간이 지날수록 감점(최소 40%까지). 공시가 없으면 0점 → 재료 있는 종목이 최대 +${pct("event").replace('%','')}점 가산되는 구조</td><td>DART</td></tr>
+<tr><td><b>실적</b></td><td>${pct("fundamental")}</td><td>영업이익증가율(40%), 매출액증가율(30%), PER 적정성(20%: 0~12배 100점 / 12~25배 60점 / 25배↑ 20점 / 적자 30점), ROE(10%)</td><td>네이버금융</td></tr>
+<tr><td><b>리스크</b></td><td>${pct("risk")}</td><td><u>낮을수록 높은 점수</u>. 공매도 거래비중 감소 추이(40%), 공매도 비중 수준(30%), 신용비율(30%). 신용비율은 예비순위 상위 300종목만 조회</td><td>KRX·네이버</td></tr>
+</tbody></table>
+<h3>등급과 매수 검토 기준</h3>
+<table><thead><tr><th>등급</th><th>종합점수</th><th>의미</th><th>권장 행동</th></tr></thead><tbody>
+<tr><td><span class="grade gA">A · 우선 검토</span></td><td>70 이상</td><td>5축 중 대부분 상위권이거나, 상위권 + 자사주 재료 보유. 재료 없이 70을 넘기려면 나머지 4축 평균이 87 이상이어야 하므로 드묾</td><td>당일 매수 검토 후보. 공시·차트·실적 원문 확인 후 진입 판단</td></tr>
+<tr><td><span class="grade gB">B · 관심</span></td><td>60 ~ 70</td><td>상위 5~10% 수준. 재료 없는 종목 중에서는 실질적 최상위군</td><td>관심 리스트 등록. 수급 60↑·리스크 50↑ 동반 시 A와 동등하게 취급 가능</td></tr>
+<tr><td><span class="grade gC">C · 관찰</span></td><td>50 ~ 60</td><td>평균 이상. 특정 축 하나가 두드러질 때 이 구간에 위치</td><td>순위 급등(▲20↑)이나 NEW 진입 시에만 개별 확인</td></tr>
+<tr><td><span class="grade gD">D · 보류</span></td><td>50 미만</td><td>시장 평균 이하</td><td>스크리닝 대상 외</td></tr>
+</tbody></table>
+<h3>실무 체크리스트 (점수는 필터, 매수 신호가 아닙니다)</h3>
+<ul>
+<li><b>1차 필터:</b> 종합 65 이상 <u>그리고</u> 수급 60 이상 <u>그리고</u> 리스크 50 이상 → "1차 관심 리스트"</li>
+<li><b>재료 확인:</b> 재료 점수가 높은 종목은 DART 원문에서 취득 규모(발행주식 대비 %)와 기간을 확인. 취득 목적이 '임직원 보상'이면 주가 효과가 제한적</li>
+<li><b>기술만 높은 종목 주의:</b> 기술 80↑ + 실적 30↓ 조합은 단기 과열 가능성. RSI 80 초과 시 감점되지만 완전히 걸러지지는 않음</li>
+<li><b>신규 포착(NEW·▲20↑):</b> 순위 급등 원인이 수급인지 재료인지 축별 점수로 구분. 거래량 급증 단독이면 하루짜리일 수 있음</li>
+<li><b>기준선 검증:</b> 히스토리 탭에서 5·10·20거래일 전 상위10의 실제 수익률과 상승비율을 확인해, 위 등급 기준선을 우리 지점 스타일에 맞게 조정 (예: 상승비율이 60% 미만이면 A 기준을 75로 상향)</li>
+</ul>
+<div class="warn">등급 기준선(70/60/50)은 점수 구조상의 논리적 구간이며, 아직 실제 수익률로 검증된 값이 아닙니다. 최소 4주 이상 히스토리가 누적된 뒤 성과검증 탭 수치를 보고 조정하세요. 어떤 점수도 단독 매수 근거가 될 수 없으며, 고객 제안 전 공시·시세를 반드시 재확인해야 합니다.</div>
+<h3>데이터 한계</h3>
+<ul>
+<li>축 데이터가 수집되지 않으면 해당 축은 50점(중립) 처리 → 특정 축이 전 종목 50점이면 그날 수집 실패</li>
+<li>관리종목·투자주의/경고/위험·스팩은 산정 전에 제외. 종목 수는 상단 "자동 제외" 카드 참고</li>
+<li>실적 지표는 네이버 최근 연간 기준으로 분기 실적 반영이 늦을 수 있음</li>
+</ul>`;
+}
+function openModal(){ document.getElementById("mdBody").innerHTML = guideHTML(); document.getElementById("ov").classList.add("on"); }
+document.getElementById("wStat").addEventListener("click", openModal);
+document.getElementById("openGuide").addEventListener("click", openModal);
+document.getElementById("closeMd").addEventListener("click", ()=>document.getElementById("ov").classList.remove("on"));
+document.getElementById("ov").addEventListener("click", e=>{ if(e.target.id==="ov") e.target.classList.remove("on"); });
 document.getElementById("tabs").addEventListener("click",e=>{ const b=e.target.closest(".tab"); if(!b) return; state.tab=b.dataset.tab; render(); });
-document.getElementById("mkt").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; state.mkt=b.dataset.v; [...b.parentNode.children].forEach(x=>x.classList.toggle("on",x===b)); render(); });
-document.getElementById("lim").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; state.lim=+b.dataset.v; [...b.parentNode.children].forEach(x=>x.classList.toggle("on",x===b)); render(); });
+["mkt","lim","grade"].forEach(id=>document.getElementById(id).addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; state[id]= id==="lim"? +b.dataset.v : b.dataset.v; [...b.parentNode.children].forEach(x=>x.classList.toggle("on",x===b)); render(); }));
 secSel.addEventListener("change",e=>{ state.sector=e.target.value; render(); });
 document.getElementById("q").addEventListener("input",e=>{ state.q=e.target.value.trim(); render(); });
-document.querySelector("#tbl thead").addEventListener("click",e=>{ const th=e.target.closest("th"); if(!th||!th.dataset.k) return; const k=th.dataset.k; if(state.sortK===k) state.sortAsc=!state.sortAsc; else { state.sortK=k; state.sortAsc = (k==="rank"||k==="n"||k==="m"||k==="sr"); } render(); });
+document.querySelector("#tbl thead").addEventListener("click",e=>{ const th=e.target.closest("th"); if(!th||!th.dataset.k) return; const k=th.dataset.k; if(state.sortK===k) state.sortAsc=!state.sortAsc; else { state.sortK=k; state.sortAsc = (k==="rank"||k==="n"||k==="sr"); } render(); });
 document.getElementById("tbody").addEventListener("click",e=>{ const s=e.target.closest(".star"); if(!s) return; const t=s.dataset.t; fav.has(t)?fav.delete(t):fav.add(t); saveFav(); render(); });
 render();
 </script>
