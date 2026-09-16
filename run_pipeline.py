@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.join(ROOT, "scripts"))
 
 import config
 import universe as U
-import fetch_prices, fetch_flows, fetch_naver, fetch_dart, scoring, build_site
+import fetch_prices, fetch_flows, fetch_naver, fetch_dart, fetch_us, scoring, build_site
 
 
 def step(title, fn, *a, **kw):
@@ -36,6 +36,7 @@ def main():
     step("4. 공매도 수집", fetch_flows.fetch_short_selling)
     step("5. 네이버 재무지표 수집", fetch_naver.fetch_fundamentals)
     step("6. DART 자사주 공시 수집", fetch_dart.fetch_buybacks)
+    step("6-1. 미국 지수 / Fear&Greed", fetch_us.fetch_us)
 
     # 신용비율은 예비 스코어 상위 K종목만 개별 조회 (요청량 절감)
     prelim = step("7. 예비 스코어링", scoring.compute, uni, preliminary=True)
