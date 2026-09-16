@@ -1,0 +1,8 @@
+pykrx>=1.0.45
+finance-datareader>=0.9.90
+pandas>=2.0
+numpy
+requests
+lxml
+html5lib
+beautifulsoup4
