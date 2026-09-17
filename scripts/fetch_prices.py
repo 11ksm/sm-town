@@ -23,13 +23,25 @@ def fetch_all_prices(universe: pd.DataFrame):
     out_dir = os.path.join(config.DATA_DIR, "prices")
     os.makedirs(out_dir, exist_ok=True)
 
-    # 지수
-    for m, code in INDEX_CODES.items():
+    # 지수 (KRX 해외 차단 → yfinance ^KS11/^KQ11 사용, 실패 시 pykrx 시도)
+    YF = {"KOSPI": "^KS11", "KOSDAQ": "^KQ11"}
+    for m in config.MARKETS:
+        done = False
         try:
-            idx = stock.get_index_ohlcv(s, e, code)
-            idx.to_csv(os.path.join(config.DATA_DIR, f"index_{m}.csv"), encoding="utf-8-sig")
+            import yfinance as yf
+            h = yf.Ticker(YF[m]).history(period="1y", interval="1d")
+            if h is not None and len(h) > 30:
+                pd.DataFrame({"날짜": h.index.strftime("%Y-%m-%d"), "종가": h["Close"].values}).to_csv(
+                    os.path.join(config.DATA_DIR, f"index_{m}.csv"), index=False, encoding="utf-8-sig")
+                done = True
         except Exception as ex:
-            print(f"[가격] {m} 지수 조회 실패: {ex}")
+            print(f"[가격] {m} 지수 yfinance 실패: {ex}")
+        if not done:
+            try:
+                idx = stock.get_index_ohlcv(s, e, INDEX_CODES[m])
+                idx.to_csv(os.path.join(config.DATA_DIR, f"index_{m}.csv"), encoding="utf-8-sig")
+            except Exception as ex:
+                print(f"[가격] {m} 지수 조회 실패: {ex}")
 
     tickers = universe.loc[~universe["excluded"], "ticker"].tolist()
     print(f"[가격] 대상 {len(tickers)}종목 수집 시작")
