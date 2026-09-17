@@ -61,7 +61,8 @@ td.name .sec{display:block;font-size:12px;color:var(--muted);margin-top:2px}
 .bars .bar i{display:block;height:100%;background:var(--orange);border-radius:4px}
 .bars .bar i.ev{background:#7c3aed}.bars .bar i.rk{background:#1f9d55}
 .bars .num{font-weight:600;text-align:right}
-.ev{display:inline-block;max-width:160px;overflow:hidden;text-overflow:ellipsis;font-size:13px;color:#7c3aed;font-weight:600}
+.ev{display:block;max-width:170px;white-space:normal;line-height:1.35;font-size:13.5px;color:#7c3aed;font-weight:800;text-align:left}
+.ev small{display:block;font-size:11px;color:var(--muted);font-weight:400;margin-top:2px}
 .empty{padding:30px;text-align:center;color:var(--muted);font-size:13px}
 .hist{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px}
@@ -74,24 +75,39 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:24px}
 .legend{font-size:12.5px;color:var(--muted);margin:6px 2px}
 .legend b{color:var(--orange);cursor:pointer;text-decoration:underline dotted}
 /* US brief */
-.us{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:12px}
-.us h2{margin:0 0 10px;font-size:15px;display:flex;align-items:center;gap:8px}
-.us h2 small{font-size:11.5px;color:var(--muted);font-weight:400}
-.usgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px;margin-bottom:12px}
-.idx{background:var(--chip);border-radius:8px;padding:8px 10px}
-.idx .k{font-size:12.5px;color:var(--muted)}.idx .v{font-size:18px;font-weight:700;margin-top:2px}.idx .c{font-size:13.5px;font-weight:600}
-.usbody{display:grid;grid-template-columns:150px 1fr;gap:14px;align-items:start}
+.us{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:12px}
+.us h2{margin:0 0 12px;font-size:17px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.us h2 .tag{background:var(--navy);color:#fff;font-size:11.5px;font-weight:800;letter-spacing:1.5px;padding:4px 10px;border-radius:6px}
+.us h2 small{font-size:12.5px;color:var(--muted);font-weight:400}
+.usgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:8px;margin-bottom:14px}
+.idx{background:var(--chip);border-radius:10px;padding:10px 12px}
+.idx .k{font-size:12.5px;color:var(--muted);display:flex;justify-content:space-between}.idx .v{font-size:19px;font-weight:800;margin-top:3px}.idx .c{font-size:14px;font-weight:700;margin-top:1px}
+.usbody{display:grid;grid-template-columns:180px 1fr;gap:18px;align-items:center;border-top:1px solid var(--line);padding-top:14px}
 @media (max-width:640px){.usbody{grid-template-columns:1fr}}
-.fng{text-align:center}
-.fng .sc{font-size:26px;font-weight:800;margin-top:-6px}.fng .lb{font-size:12.5px;font-weight:700}.fng .hist{font-size:11px;color:var(--muted);margin-top:4px}
-.review{font-size:15px;line-height:1.75;margin:0}
-.review li{margin-bottom:2px}
-.heads{margin:8px 0 0;padding-left:0;list-style:none;font-size:12.5px;color:var(--muted)}
-.heads li{margin-top:3px}
+.fng{text-align:center;background:var(--chip);border-radius:10px;padding:12px 8px 10px}
+.fng .sc{font-size:30px;font-weight:900;margin-top:-4px;line-height:1}.fng .lb{font-size:14px;font-weight:800;margin-top:4px}
+.fng .hist{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.5}
+.fng .ttl{font-size:11px;color:var(--muted);letter-spacing:.5px;margin-top:6px}
+.review{font-size:15.5px;line-height:1.8;margin:0;padding-left:0;list-style:none}
+.review li{padding-left:16px;position:relative;margin-bottom:4px}
+.review li::before{content:"";position:absolute;left:0;top:11px;width:7px;height:7px;border-radius:50%;background:var(--orange)}
+.review b{font-weight:800}
+.heads{margin:12px 0 0;padding:10px 0 0;border-top:1px dashed var(--line);list-style:none;font-size:13px;color:var(--muted)}
+.heads li{margin-top:4px}.heads a{color:inherit;text-decoration:none}.heads a:hover{color:var(--orange)}
 .heads a{color:inherit;text-decoration:none}.heads a:hover{color:var(--orange)}
 /* modal */
 .ov{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;padding:20px 12px;overflow-y:auto;z-index:50}
 .ov.on{display:flex}
+.guide{padding:20px 22px;font-size:15px;line-height:1.7}
+.guide h2,.md h2{margin:0 0 6px;font-size:20px}
+.guide h3,.md h3{margin:22px 0 8px;font-size:16px;color:var(--orange)}
+.guide table,.md table{min-width:0;width:100%;table-layout:fixed;font-size:13.5px}
+.guide th,.guide td,.md th,.md td{padding:9px 10px;white-space:normal;text-align:left;position:static;vertical-align:top;word-break:keep-all}
+.guide th:first-child,.md th:first-child{width:78px}.guide th:nth-child(2),.md th:nth-child(2){width:78px}
+.guide ul,.md ul{padding-left:20px;margin:6px 0}.guide li,.md li{margin-bottom:5px}
+.guide b,.md b{font-size:1.05em}
+.guide .warn,.md .warn{background:#fff7ed;border-left:4px solid var(--orange);padding:10px 14px;border-radius:6px;font-size:14px;color:#7c4a1e;margin-top:14px}
+.guide .key,.md .key{font-size:1.15em;font-weight:800;color:var(--orange)}
 .md{background:var(--card);color:var(--text);border-radius:14px;max-width:760px;width:100%;padding:20px 22px;font-size:14.5px;line-height:1.65;position:relative}
 .md h2{margin:0 0 6px;font-size:18px}
 .md h3{margin:18px 0 6px;font-size:14px;color:var(--orange)}
@@ -148,7 +164,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:24px}
     <div class="hist" id="snap"></div>
   </div>
 
-  <div id="panelGuide" style="display:none" class="card"></div>
+  <div id="panelGuide" style="display:none" class="card guide"></div>
 </main>
 <footer>KR Stock Radar · GitHub Actions 자동 생성 · 데이터: KRX, DART, 네이버금융</footer>
 
@@ -163,6 +179,15 @@ const AXN = {supply:"수급",technical:"기술",event:"재료",fundamental:"실�
 const AXL = ["수급","기술","재료","실적","리스크"];
 let state = { tab:"all", mkt:"", sector:"", grade:"", lim:25, q:"", sortK:"rank", sortAsc:true };
 
+function evShort(t){
+  if(!t) return "";
+  if(t.includes("소각")) return "자사주 소각";
+  if(t.includes("신탁") && t.includes("해지")) return "신탁 해지 (주의)";
+  if(t.includes("신탁")) return "자사주 취득 (신탁)";
+  if(t.includes("취득")) return "자사주 직접 취득";
+  if(t.includes("처분")) return "자사주 처분";
+  return t.length>12? t.slice(0,12)+"…" : t;
+}
 const gradeOf = t => t>=70?"A":t>=60?"B":t>=50?"C":"D";
 const gradeName = {A:"우선 검토",B:"관심",C:"관찰",D:"보류"};
 
@@ -240,7 +265,7 @@ function render(){
     <td>${r.streak?`<b>${r.streak}일</b> 연속<span class="sub2">기관+외인 순매수</span>`:`<span style="color:var(--muted)">-</span>`}</td>
     <td>${signed(r.r20)}</td>
     <td>${r.sr?`${r.sr}<span class="sub2">/ ${r.ss}종목</span>`:"-"}</td>
-    <td><span class="ev" title="${r.ev||''}">${r.ev||'<span style="color:var(--muted);font-weight:400">-</span>'}</span></td>
+    <td>${r.ev?`<span class="ev">${evShort(r.ev)}<small>${r.ev}</small></span>`:'<span style="color:var(--muted)">-</span>'}</td>
   </tr>`;}).join("");
 }
 function renderHist(){
@@ -256,7 +281,7 @@ function guideHTML(){
   const w=D.weights, pct=k=>Math.round(w[k]*100)+"%";
   return `
 <h2>점수 산출 방식과 해석 가이드</h2>
-<p>모든 축은 <b>스크리닝 대상 전 종목 중 백분위(0~100)</b>입니다. 예: 수급 85점 = 상위 15%. 종합점수는 5개 축의 가중 평균이므로 <b>절대적 확률이 아닌 시장 내 상대 순위</b>를 뜻합니다.</p>
+<p>모든 축은 <span class="key">전 종목 중 백분위(0~100)</span>입니다. 예: 수급 85점 = 상위 15%. 종합점수는 5개 축의 가중 평균이므로 <span class="key">절대 확률이 아닌 시장 내 상대 순위</span>를 뜻합니다.</p>
 <h3>5개 축 · 가중치</h3>
 <table><thead><tr><th>축</th><th>비중</th><th>무엇을 보나</th><th>출처</th></tr></thead><tbody>
 <tr><td><b>수급</b></td><td>${pct("supply")}</td><td>기관+외국인 20거래일 순매수금액을 <u>시가총액으로 나눠</u> 대형주 편향 제거(75%) + 연속 순매수 일수(25%)</td><td>KRX</td></tr>
@@ -265,7 +290,7 @@ function guideHTML(){
 <tr><td><b>실적</b></td><td>${pct("fundamental")}</td><td>영업이익증가율(40%), 매출액증가율(30%), PER 적정성(20%: 0~12배 100점 / 12~25배 60점 / 25배↑ 20점 / 적자 30점), ROE(10%)</td><td>네이버금융</td></tr>
 <tr><td><b>리스크</b></td><td>${pct("risk")}</td><td><u>낮을수록 높은 점수</u>. 공매도 거래비중 감소 추이(40%), 공매도 비중 수준(30%), 신용비율(30%). 신용비율은 예비순위 상위 300종목만 조회</td><td>KRX·네이버</td></tr>
 </tbody></table>
-<h3>등급과 매수 검토 기준</h3>
+<h3>등급과 매수 검토 기준 <span style="color:var(--muted);font-size:13px;font-weight:400">— A 70↑ · B 60~70 · C 50~60 · D 50↓</span></h3>
 <table><thead><tr><th>등급</th><th>종합점수</th><th>의미</th><th>권장 행동</th></tr></thead><tbody>
 <tr><td><span class="grade gA">A · 우선 검토</span></td><td>70 이상</td><td>5축 중 대부분 상위권이거나, 상위권 + 자사주 재료 보유. 재료 없이 70을 넘기려면 나머지 4축 평균이 87 이상이어야 하므로 드묾</td><td>당일 매수 검토 후보. 공시·차트·실적 원문 확인 후 진입 판단</td></tr>
 <tr><td><span class="grade gB">B · 관심</span></td><td>60 ~ 70</td><td>상위 5~10% 수준. 재료 없는 종목 중에서는 실질적 최상위군</td><td>관심 리스트 등록. 수급 60↑·리스크 50↑ 동반 시 A와 동등하게 취급 가능</td></tr>
@@ -274,7 +299,7 @@ function guideHTML(){
 </tbody></table>
 <h3>실무 체크리스트 (점수는 필터, 매수 신호가 아닙니다)</h3>
 <ul>
-<li><b>1차 필터:</b> 종합 65 이상 <u>그리고</u> 수급 60 이상 <u>그리고</u> 리스크 50 이상 → "1차 관심 리스트"</li>
+<li><b>1차 필터:</b> <span class="key">종합 65↑ + 수급 60↑ + 리스크 50↑</span> → "1차 관심 리스트"</li>
 <li><b>재료 확인:</b> 재료 점수가 높은 종목은 DART 원문에서 취득 규모(발행주식 대비 %)와 기간을 확인. 취득 목적이 '임직원 보상'이면 주가 효과가 제한적</li>
 <li><b>기술만 높은 종목 주의:</b> 기술 80↑ + 실적 30↓ 조합은 단기 과열 가능성. RSI 80 초과 시 감점되지만 완전히 걸러지지는 않음</li>
 <li><b>신규 포착(NEW·▲20↑):</b> 순위 급등 원인이 수급인지 재료인지 축별 점수로 구분. 거래량 급증 단독이면 하루짜리일 수 있음</li>
@@ -308,21 +333,29 @@ function fngGauge(score){
 function renderUS(){
   const U=D.us, el=document.getElementById("usBrief");
   if(!U){ el.innerHTML=""; return; }
-  const RK={"extreme fear":"극단적 공포","fear":"공포","neutral":"중립","greed":"탐욕","extreme greed":"극단적 탐욕"};
-  const idx=Array.isArray(U.indices)?U.indices:[];
-  const cards=idx.map(v=>{
-    const k=v.name||v.sym, isKrw=k.includes("원/달러"), isVix=k==="VIX";
-    if(v.close===null||v.close===undefined) return `<div class="idx"><div class="k">${k}</div><div class="v" style="color:var(--muted);font-size:13px">-</div></div>`;
-    const good = (isVix||isKrw) ? v.chg<0 : v.chg>0;
-    const val = v.close.toLocaleString(undefined,{maximumFractionDigits:isKrw?1:2});
-    const chg = `${v.chg>0?'+':''}${(v.chg??0).toFixed(2)}%`;
-    const wk = (v.chg_5d===null||v.chg_5d===undefined)?"":`<div class="hist">5일 ${v.chg_5d>0?'+':''}${v.chg_5d.toFixed(1)}%</div>`;
-    return `<div class="idx"><div class="k">${k} <span style="font-size:10px">${v.date||''}</span></div><div class="v">${val}</div><div class="c ${good?'pos':'neg'}">${chg}</div>${wk}</div>`;
+  const ORDER=["S&P 500","나스닥","다우","필라델피아 반도체","VIX","미 10년물(%)","원/달러"];
+  let entries=[];
+  if(Array.isArray(U.indices)) entries=U.indices.map(v=>[v.name||v.sym,{last:v.close,pct:v.chg,date:v.date}]);
+  else if(U.indices) entries=Object.entries(U.indices);
+  entries.sort((x,y)=>ORDER.indexOf(x[0])-ORDER.indexOf(y[0]));
+  const cards=entries.map(([k,v])=>{
+    if(!v||v.last===null||v.last===undefined) return `<div class="idx"><div class="k">${k}</div><div class="v" style="color:var(--muted);font-size:14px">수집 실패</div></div>`;
+    const inv = k==="VIX"||k.includes("원/달러")||k.includes("10년물");
+    const good = inv? v.pct<0 : v.pct>0;
+    const val = k.includes("10년물")? v.last.toFixed(2)+"%" : v.last.toLocaleString(undefined,{maximumFractionDigits:k.includes("원/달러")?1:2});
+    const chg = k.includes("10년물")? `${v.chg>0?'+':''}${(v.chg*100).toFixed(0)}bp` : `${v.pct>0?'+':''}${(v.pct??0).toFixed(2)}%`;
+    return `<div class="idx"><div class="k"><span>${k}</span><span>${v.date||''}</span></div><div class="v">${val}</div><div class="c ${good?'pos':'neg'}">${chg}</div></div>`;
   }).join("");
   const f=U.fng&&U.fng.score!==undefined?U.fng:null;
-  const fng = f? `<div class="fng">${fngGauge(f.score)}<div class="sc">${f.score}</div><div class="lb">${RK[(f.rating||"").toLowerCase()]||f.rating||""}</div><div class="hist">전일 ${f.prev_close??'-'} · 1주전 ${f.prev_week??'-'} · 1달전 ${f.prev_month??'-'}</div><div class="hist">CNN Fear &amp; Greed</div></div>` : `<div class="fng" style="color:var(--muted);font-size:12px;padding-top:20px">공포·탐욕지수<br>수집 실패</div>`;
+  const lab = f? (f.label_ko || {"extreme fear":"극단적 공포","fear":"공포","neutral":"중립","greed":"탐욕","extreme greed":"극단적 탐욕"}[(f.rating||"").toLowerCase()] || "") : "";
+  const hist = f? [["전일",f.prev_close],["1주전",f.week_ago??f.prev_week],["1달전",f.month_ago??f.prev_month]].filter(x=>x[1]!==null&&x[1]!==undefined&&x[1]!==0).map(x=>`${x[0]} ${x[1]}`).join(" · ") : "";
+  const col = f? (f.score<=25?"#c0392b":f.score<=45?"#e67e22":f.score<=55?"#7f8c8d":f.score<=75?"#5aa634":"#1f9d55") : "";
+  const fng = f? `<div class="fng">${fngGauge(f.score)}<div class="sc" style="color:${col}">${f.score}</div><div class="lb" style="color:${col}">${lab}</div>${hist?`<div class="hist">${hist}</div>`:""}<div class="ttl">CNN FEAR &amp; GREED</div></div>`
+               : `<div class="fng" style="color:var(--muted);font-size:13px;padding:24px 8px">공포·탐욕지수<br>수집 실패</div>`;
   const rv = Array.isArray(U.review)?U.review:String(U.review||"").split(/(?<=\.)\s+/).filter(Boolean);
-  el.innerHTML=`<div class="us"><h2>🇺🇸 미국시장 브리핑 <small>전일 뉴욕장 마감 기준 · 자동 생성 요약</small></h2><div class="usgrid">${cards}</div><div class="usbody">${fng}<div><ul class="review" style="padding-left:18px">${rv.map(t=>`<li>${t}</li>`).join("")}</ul></div></div></div>`;
+  const em = t => t.replace(/^([^—]+?)(\s—\s)/, "<b>$1</b>$2").replace(/([+-]\d+\.\d+%|[+-]\d+bp)/g, m=>`<b class="${m.startsWith('-')?'neg':'pos'}">${m}</b>`);
+  const heads = Array.isArray(U.headlines)&&U.headlines.length? `<ul class="heads">${U.headlines.slice(0,4).map(h=>`<li>· <a href="${h.link}" target="_blank" rel="noopener">${h.title}</a></li>`).join("")}</ul>` : "";
+  el.innerHTML=`<div class="us"><h2><span class="tag">US MARKET</span>미국시장 브리핑 <small>전일 뉴욕장 마감 기준 · 자동 생성 요약</small></h2><div class="usgrid">${cards}</div><div class="usbody">${fng}<div><ul class="review">${rv.map(t=>`<li>${em(t)}</li>`).join("")}</ul>${heads}</div></div></div>`;
 }
 renderUS();
 render();
