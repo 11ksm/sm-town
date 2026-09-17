@@ -32,8 +32,11 @@ def _from_fdr() -> pd.DataFrame:
     lst = fdr.StockListing("KRX")          # Code, Name, Market, Marcap, ...
     desc = fdr.StockListing("KRX-DESC")    # Code, Name, Sector, Industry, ...
     lst = lst.rename(columns={"Code": "ticker", "Name": "name", "Market": "market", "Marcap": "market_cap"})
+    if "Sector" not in desc.columns and "Industry" in desc.columns:
+        desc["Sector"] = desc["Industry"]
     desc = desc.rename(columns={"Code": "ticker", "Sector": "sector"})
     df = lst.merge(desc[["ticker", "sector"]], on="ticker", how="left")
+    df["sector"] = df["sector"].where(~df["sector"].astype(str).str.contains("부$", na=False), None)
     df = df[df["market"].isin(config.MARKETS)]
     return df[["ticker", "name", "market", "sector", "market_cap"]]
 
@@ -60,9 +63,31 @@ def _from_pykrx() -> pd.DataFrame:
     return df[["ticker", "name", "market", "sector", "market_cap"]]
 
 
+def _fdr_admin() -> dict:
+    """FinanceDataReader 경로로 관리종목 조회 (KRX 상장정보 - 해외에서도 접근 가능)"""
+    out = {}
+    try:
+        import FinanceDataReader as fdr
+        for key in ("KRX-ADMINISTRATIVE", "KRX-ADMIN"):
+            try:
+                df = fdr.StockListing(key)
+                col = next((c for c in df.columns if c.lower() in ("code", "symbol", "종목코드")), None)
+                if col is not None:
+                    for c in df[col].astype(str).str.zfill(6):
+                        out[c] = "관리종목"
+                    break
+            except Exception:
+                continue
+    except Exception:
+        pass
+    if out:
+        print(f"[유니버스] 관리종목(FDR) {len(out)}종목")
+    return out
+
+
 def fetch_exclusions() -> dict:
     """{ticker: 사유} 형태로 반환"""
-    result = {}
+    result = _fdr_admin()
     targets = []
     if config.EXCLUDE_ADMIN_ISSUES:
         targets.append("관리종목")
@@ -75,7 +100,7 @@ def fetch_exclusions() -> dict:
             codes = set(re.findall(r"code=(\d{6})", html))
             for c in codes:
                 result.setdefault(c, LABEL_KO.get(key, key))
-            print(f"[유니버스] {LABEL_KO.get(key, key)} {len(codes)}종목 제외 대상")
+            print(f"[유니버스] {LABEL_KO.get(key, key)} {len(codes)}종목" + (" (네이버 PC 차단 가능성)" if not codes else ""))
         except Exception as e:
             print(f"[유니버스] {key} 조회 실패: {e}")
         time.sleep(config.REQUEST_SLEEP)
