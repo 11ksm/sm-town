@@ -100,9 +100,14 @@ def technical_and_price(universe: pd.DataFrame) -> pd.DataFrame:
             ret20 = c.iloc[-1] / c.iloc[-21] - 1 if len(c) > 21 else np.nan
             rs = ret20 - idx_ret.get(mk.get(t), 0) if not np.isnan(ret20) else np.nan
 
+            rets = c.pct_change().dropna()
+            vol20 = rets.iloc[-20:].std() * 100 if len(rets) >= 20 else np.nan
+            dd20 = c.iloc[-1] / c.iloc[-20:].max() - 1 if len(c) >= 20 else np.nan
+            turnover = (c.iloc[-20:] * v.iloc[-20:]).mean() if v is not None and len(v) >= 20 else np.nan
             rows.append({"ticker": t, "close": c.iloc[-1], "chg_1d": c.iloc[-1] / c.iloc[-2] - 1,
                          "ret_20d": ret20, "rs_20d": rs, "near_52w": near52, "rsi": rsi,
-                         "vol_spike": vol_spike, "tech_pt": pt})
+                         "vol_spike": vol_spike, "tech_pt": pt,
+                         "vol20": vol20, "dd20": dd20, "turnover": turnover})
         except Exception:
             continue
     df = pd.DataFrame(rows)
@@ -150,51 +155,55 @@ def fundamental() -> pd.DataFrame:
     f = _read("fundamentals.csv")
     if f.empty:
         return pd.DataFrame(columns=["ticker", "fundamental"])
-    for c in ["op_growth", "sales_growth", "per", "pbr", "roe"]:
+    for c in ["op_growth", "sales_growth", "per", "pbr", "roe", "dividend_yield", "frgn_rate"]:
         if c not in f.columns:
             f[c] = np.nan
-    per_pt = pd.Series(0.0, index=f.index)
+        f[c] = pd.to_numeric(f[c], errors="coerce")
+    per_pt = pd.Series(30.0, index=f.index)
     per_pt[(f["per"] > 0) & (f["per"] <= 12)] = 100
     per_pt[(f["per"] > 12) & (f["per"] <= 25)] = 60
     per_pt[(f["per"] > 25)] = 20
-    per_pt[f["per"].isna() | (f["per"] <= 0)] = 30
-    f["fundamental"] = (0.4 * _pct(f["op_growth"].clip(-200, 500)) + 0.3 * _pct(f["sales_growth"].clip(-100, 300))
-                        + 0.2 * per_pt + 0.1 * _pct(f["roe"]))
-    return f[["ticker", "fundamental", "op_growth", "sales_growth", "per", "pbr", "roe", "frgn_rate"]]
+    has_growth = f["op_growth"].notna().sum() > 20
+    if has_growth:
+        f["fundamental"] = (0.35 * _pct(f["op_growth"].clip(-200, 500)) + 0.2 * _pct(f["sales_growth"].clip(-100, 300))
+                            + 0.25 * per_pt + 0.1 * _pct(f["roe"]) + 0.1 * _pct(f["dividend_yield"]))
+    else:
+        # 증가율 데이터가 없을 때: 밸류(PER/PBR)·수익성(ROE)·배당 기반
+        f["fundamental"] = (0.4 * per_pt + 0.25 * (100 - _pct(f["pbr"])) + 0.2 * _pct(f["roe"]) + 0.15 * _pct(f["dividend_yield"]))
+    return f[["ticker", "fundamental", "op_growth", "sales_growth", "per", "pbr", "roe", "frgn_rate", "dividend_yield"]]
 
 
-def risk() -> pd.DataFrame:
+def risk(price_df: pd.DataFrame) -> pd.DataFrame:
+    """리스크 축: 낮을수록 높은 점수
+    기본: 20일 변동성(40%) · 20일 고점 대비 낙폭(30%) · 거래대금 유동성(30%, 높을수록 안전)
+    공매도/신용비율 데이터가 있으면 추가 반영"""
+    if price_df.empty or "vol20" not in price_df.columns:
+        return pd.DataFrame(columns=["ticker", "risk"])
+    df = price_df[["ticker", "vol20", "dd20", "turnover"]].copy()
+    base = 0.4 * (100 - _pct(df["vol20"])) + 0.3 * _pct(df["dd20"]) + 0.3 * _pct(df["turnover"])
+    extra, w = [], 0.0
     sh = _read("short_selling.csv")
-    cr = _read("credit_ratio.csv")
-    parts = []
     if not sh.empty:
         sh["short_ratio"] = pd.to_numeric(sh["short_ratio"], errors="coerce")
-        sh = sh.sort_values("date")
-        def _trend(g):
-            r = g["short_ratio"].dropna()
-            if len(r) < 8:
-                return np.nan
-            recent, prior = r.iloc[-5:].mean(), r.iloc[:-5].mean()
-            return prior - recent  # 양수 = 공매도 비중 감소(좋음)
-        tr = sh.groupby("ticker").apply(_trend).rename("short_trend")
-        lvl = sh.groupby("ticker")["short_ratio"].apply(lambda x: x.iloc[-5:].mean()).rename("short_ratio")
-        parts.append(pd.concat([tr, lvl], axis=1))
-    if not cr.empty:
-        parts.append(cr.set_index("ticker")[["credit_ratio"]])
-    if not parts:
-        return pd.DataFrame(columns=["ticker", "risk"])
-    df = pd.concat(parts, axis=1).reset_index().rename(columns={"index": "ticker"})
-    for c in ["short_trend", "short_ratio", "credit_ratio"]:
-        if c not in df.columns:
-            df[c] = np.nan
-    df["risk"] = (0.4 * _pct(df["short_trend"]) + 0.3 * (100 - _pct(df["short_ratio"])) + 0.3 * (100 - _pct(df["credit_ratio"])))
-    return df
+        lvl = sh.groupby("ticker")["short_ratio"].apply(lambda x: x.iloc[-5:].mean())
+        df["short_ratio"] = df["ticker"].map(lvl)
+        extra.append(100 - _pct(df["short_ratio"])); w += 0.3
+    cr = _read("credit_ratio.csv")
+    if not cr.empty and cr["credit_ratio"].notna().sum() > 0:
+        df["credit_ratio"] = df["ticker"].map(cr.set_index("ticker")["credit_ratio"])
+        extra.append(100 - _pct(df["credit_ratio"])); w += 0.3
+    if extra:
+        df["risk"] = base * (1 - w) + sum(e * 0.3 for e in extra)
+    else:
+        df["risk"] = base
+    return df[["ticker", "risk", "vol20", "dd20"] + [c for c in ("short_ratio", "credit_ratio") if c in df.columns]]
 
 
 # ---------- 합산 ----------
 def compute(universe: pd.DataFrame, preliminary=False) -> pd.DataFrame:
     base = universe[~universe["excluded"]].copy()
-    parts = [technical_and_price(universe), supply(universe), event(), fundamental(), risk()]
+    price_df = technical_and_price(universe)
+    parts = [price_df, supply(universe), event(), fundamental(), risk(price_df)]
     for p in parts:
         if not p.empty:
             base = base.merge(p, on="ticker", how="left")
@@ -202,6 +211,13 @@ def compute(universe: pd.DataFrame, preliminary=False) -> pd.DataFrame:
         if ax not in base.columns:
             base[ax] = 50.0
         base[ax] = base[ax].fillna(0.0 if ax == "event" else 50.0)
+
+    fh = _read("fundamentals.csv")
+    if not fh.empty and "sector_hint" in fh.columns:
+        hint = fh.set_index("ticker")["sector_hint"]
+        miss = base["sector"].isna() | base["sector"].astype(str).isin(["기타", "", "nan", "None"])
+        base.loc[miss, "sector"] = base.loc[miss, "ticker"].map(hint)
+    base["sector"] = base["sector"].fillna("기타").replace({"": "기타", "None": "기타", "nan": "기타"})
 
     base["total"] = sum(base[ax] * w for ax, w in config.WEIGHTS.items())
     base = base.dropna(subset=["close"]) if "close" in base.columns else base
