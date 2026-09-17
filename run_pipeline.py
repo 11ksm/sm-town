@@ -32,16 +32,17 @@ def main():
         raise SystemExit("유니버스 구성 실패 - 중단")
 
     step("2. 가격/지수 수집", fetch_prices.fetch_all_prices, uni)
-    step("3. 기관/외국인 수급 수집", fetch_flows.fetch_investor_flows)
+    step("3. 기관/외국인 수급 수집 (네이버 모바일 API)", fetch_flows.fetch_investor_flows, uni)
     step("4. 공매도 수집", fetch_flows.fetch_short_selling)
-    step("5. 네이버 재무지표 수집", fetch_naver.fetch_fundamentals)
+    step("5. 실적/밸류 지표 수집 (네이버 모바일 API)", fetch_naver.fetch_fundamentals, uni)
     step("6. DART 자사주 공시 수집", fetch_dart.fetch_buybacks)
     step("6-1. 미국 지수 / Fear&Greed", fetch_us.fetch_us)
 
     # 신용비율은 예비 스코어 상위 K종목만 개별 조회 (요청량 절감)
     prelim = step("7. 예비 스코어링", scoring.compute, uni, preliminary=True)
     if prelim is not None and config.CREDIT_RATIO_TOP_K > 0:
-        step("8. 신용비율 수집 (상위 K)", fetch_naver.fetch_credit_ratio, prelim["ticker"].head(config.CREDIT_RATIO_TOP_K).tolist())
+        step("8. 실적 보강 (yfinance, 모바일 API 실패 시 상위 K)", fetch_naver.fetch_fundamentals_yf,
+             prelim["ticker"].head(config.CREDIT_RATIO_TOP_K).tolist(), uni)
 
     scores = step("9. 최종 스코어링", scoring.compute, uni)
     if scores is None or scores.empty:
