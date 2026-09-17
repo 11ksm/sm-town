@@ -1,108 +1,84 @@
 """
-수급 데이터 수집 (pykrx, 시장 전체를 날짜별 1회 호출로 수집 → 효율적)
-- 기관합계/외국인 종목별 순매수거래대금 (최근 N거래일)
-- 공매도 거래량/거래비중 (최근 N거래일)
+수급 데이터 수집 (네이버 모바일 API — GitHub 서버에서 접근 가능한 경로)
+KRX 정보데이터시스템은 해외 IP를 차단하므로 pykrx 수급 함수는 사용하지 않습니다.
+
+API: https://m.stock.naver.com/api/stock/{code}/trend?pageSize=N
+     → 일자별 종가, 외국인 순매수량, 기관 순매수량
+     순매수금액 ≈ (외국인 순매수량 + 기관 순매수량) × 종가
 """
 import os
 import time
-from datetime import datetime, timedelta
 
 import pandas as pd
+import requests
 import config
 
-
-def _date_candidates(n_extra=15):
-    d = datetime.today()
-    out = []
-    for _ in range(max(config.INVESTOR_LOOKBACK_DAYS, config.SHORT_LOOKBACK_DAYS) + n_extra):
-        out.append(d.strftime("%Y%m%d"))
-        d -= timedelta(days=1)
-    return out
+TREND_URL = "https://m.stock.naver.com/api/stock/{code}/trend?pageSize={n}"
+MOBILE_HEADERS = {**config.REQUEST_HEADERS, "Referer": "https://m.stock.naver.com/", "Accept": "application/json"}
 
 
-def _std_ticker_col(df: pd.DataFrame) -> pd.DataFrame:
-    df = df.reset_index()
-    col = next((c for c in df.columns if c in ("티커", "종목코드")), df.columns[0])
-    return df.rename(columns={col: "ticker"})
+def _num(x):
+    try:
+        return float(str(x).replace(",", "").replace("+", ""))
+    except Exception:
+        return 0.0
 
 
-def fetch_investor_flows():
-    from pykrx import stock
-    frames, used = [], 0
-    for date in _date_candidates():
-        if used >= config.INVESTOR_LOOKBACK_DAYS:
-            break
-        day = []
-        for m in config.MARKETS:
-            for inv in ["기관합계", "외국인"]:
-                try:
-                    d = stock.get_market_net_purchases_of_equities_by_ticker(date, date, m, inv)
-                except Exception:
+def _probe(sess) -> bool:
+    try:
+        r = sess.get(TREND_URL.format(code="005930", n=3), timeout=10)
+        j = r.json()
+        return isinstance(j, list) and len(j) > 0 and ("bizdate" in j[0] or "bizDate" in j[0])
+    except Exception as e:
+        print(f"[수급] 모바일 API 접근 실패: {e}")
+        return False
+
+
+def fetch_investor_flows(universe: pd.DataFrame = None) -> pd.DataFrame:
+    if universe is None:
+        universe = pd.read_csv(os.path.join(config.DATA_DIR, "universe.csv"), dtype={"ticker": str})
+    tickers = universe.loc[~universe["excluded"], "ticker"].tolist()
+
+    sess = requests.Session()
+    sess.headers.update(MOBILE_HEADERS)
+    if not _probe(sess):
+        print("[수급] 데이터 없음 → 수급 축 중립 처리")
+        return pd.DataFrame()
+
+    rows, failed = [], 0
+    for i, t in enumerate(tickers):
+        try:
+            j = sess.get(TREND_URL.format(code=t, n=config.INVESTOR_LOOKBACK_DAYS), timeout=10).json()
+            for it in j:
+                date = str(it.get("bizdate") or it.get("bizDate") or "")
+                if not date:
                     continue
-                if d is None or d.empty:
-                    continue
-                d = _std_ticker_col(d)
-                amt = next((c for c in d.columns if "순매수거래대금" in c), None)
-                if amt is None:
-                    continue
-                d = d.rename(columns={amt: "net_amount"})
-                d["date"], d["investor"] = date, inv
-                day.append(d[["ticker", "net_amount", "date", "investor"]])
-        if day:
-            frames.append(pd.concat(day, ignore_index=True))
-            used += 1
-        time.sleep(0.1)
-    if not frames:
+                close = _num(it.get("closePrice"))
+                fq = _num(it.get("foreignerPureBuyQuant"))
+                oq = _num(it.get("organPureBuyQuant"))
+                rows.append({"ticker": t, "date": date, "net_amount": (fq + oq) * close,
+                             "frgn_amount": fq * close, "inst_amount": oq * close})
+        except Exception:
+            failed += 1
+        if i % 500 == 0 and i > 0:
+            print(f"  수급 진행 {i}/{len(tickers)}")
+        time.sleep(0.05)
+
+    if not rows:
         print("[수급] 데이터 없음")
         return pd.DataFrame()
-    out = pd.concat(frames, ignore_index=True)
-    out["ticker"] = out["ticker"].astype(str).str.zfill(6)
+    out = pd.DataFrame(rows)
     os.makedirs(config.DATA_DIR, exist_ok=True)
     out.to_csv(os.path.join(config.DATA_DIR, "investor_flows.csv"), index=False, encoding="utf-8-sig")
-    print(f"[수급] {used}거래일 수집 완료")
+    print(f"[수급] {out['ticker'].nunique()}종목 × {out['date'].nunique()}거래일 수집 (실패 {failed})")
     return out
 
 
 def fetch_short_selling():
-    from pykrx import stock
-    frames, used = [], 0
-    for date in _date_candidates():
-        if used >= config.SHORT_LOOKBACK_DAYS:
-            break
-        day = []
-        for m in config.MARKETS:
-            try:
-                d = stock.get_shorting_volume_by_ticker(date, market=m)
-            except Exception:
-                continue
-            if d is None or d.empty:
-                continue
-            d = _std_ticker_col(d)
-            ratio = next((c for c in d.columns if "비중" in c), None)
-            vol = next((c for c in d.columns if c == "공매도"), None)
-            if ratio is None:
-                continue
-            d = d.rename(columns={ratio: "short_ratio"})
-            if vol:
-                d = d.rename(columns={vol: "short_volume"})
-            else:
-                d["short_volume"] = 0
-            d["date"] = date
-            day.append(d[["ticker", "short_ratio", "short_volume", "date"]])
-        if day:
-            frames.append(pd.concat(day, ignore_index=True))
-            used += 1
-        time.sleep(0.1)
-    if not frames:
-        print("[공매도] 데이터 없음 (리스크 축은 중립 처리)")
-        return pd.DataFrame()
-    out = pd.concat(frames, ignore_index=True)
-    out["ticker"] = out["ticker"].astype(str).str.zfill(6)
-    out.to_csv(os.path.join(config.DATA_DIR, "short_selling.csv"), index=False, encoding="utf-8-sig")
-    print(f"[공매도] {used}거래일 수집 완료")
-    return out
+    """KRX 공매도 데이터는 해외 IP 차단으로 수집 불가. 리스크 축은 가격 기반 지표(변동성·낙폭·유동성)로 대체."""
+    print("[공매도] KRX 해외 접속 차단으로 생략 → 리스크 축은 변동성·낙폭·유동성으로 산정")
+    return pd.DataFrame()
 
 
 if __name__ == "__main__":
     fetch_investor_flows()
-    fetch_short_selling()
