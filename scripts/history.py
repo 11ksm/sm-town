@@ -34,7 +34,7 @@ def append_today(hist: pd.DataFrame, scores: pd.DataFrame, today: str) -> pd.Dat
     top = scores.head(config.HISTORY_TRACK_N)[["ticker", "name", "rank", "total", "close"]].copy()
     top.insert(0, "date", today)
     hist = hist[hist["date"] != today]
-    hist = pd.concat([hist, top], ignore_index=True)
+    hist = pd.concat([h for h in (hist, top) if not h.empty], ignore_index=True)
     keep = sorted(hist["date"].unique())[-config.HISTORY_KEEP_DAYS:]
     hist = hist[hist["date"].isin(keep)]
     os.makedirs(config.STATE_DIR, exist_ok=True)
