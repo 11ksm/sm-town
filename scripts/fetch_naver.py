@@ -1,116 +1,130 @@
 """
-네이버금융 데이터 수집
-1) 시가총액 페이지(항목 커스터마이즈)로 전 종목의 실적/밸류 지표 일괄 수집
-   - 영업이익증가율, 매출액증가율, PER, PBR, ROE, 외국인비율
-2) 신용비율은 종목별 페이지에서만 제공 → 예비 스코어 상위 K종목만 개별 조회
-
-주의: 네이버 페이지 구조가 바뀌면 파싱이 실패할 수 있습니다. 실패 시 해당 축은 중립(50점) 처리되어
-파이프라인 전체는 계속 동작합니다.
+실적·밸류 지표 수집
+1순위: 네이버 모바일 API (전 종목, 빠름)  https://m.stock.naver.com/api/stock/{code}/integration
+2순위: yfinance (모바일 API 차단 시, 예비순위 상위 K종목만)
+결과: data/fundamentals.csv  (ticker, per, pbr, eps, dividend_yield, frgn_rate, roe, op_growth, sales_growth, sector_hint)
 """
 import os
-import re
 import time
-from io import StringIO
 
 import pandas as pd
 import requests
 import config
 
-FIELD_SUBMIT = "https://finance.naver.com/sise/field_submit.naver"
-MARKET_SUM = "https://finance.naver.com/sise/sise_market_sum.naver"
-ITEM_MAIN = "https://finance.naver.com/item/main.naver?code={code}"
-
-# 네이버 항목 ID (최대 6개 선택 가능)
-FIELDS = ["operating_profit_increasing_rate", "sales_increasing_rate", "per", "pbr", "roe", "frgn_rate"]
-COL_MAP = {
-    "영업이익증가율": "op_growth",
-    "매출액증가율": "sales_growth",
-    "PER": "per",
-    "PBR": "pbr",
-    "ROE": "roe",
-    "외국인비율": "frgn_rate",
-}
-SOSOK = {"KOSPI": 0, "KOSDAQ": 1}
+INTEG_URL = "https://m.stock.naver.com/api/stock/{code}/integration"
+MOBILE_HEADERS = {**config.REQUEST_HEADERS, "Referer": "https://m.stock.naver.com/", "Accept": "application/json"}
+KEYMAP = {"per": "per", "pbr": "pbr", "eps": "eps", "dividendYield": "dividend_yield", "foreignRatio": "frgn_rate",
+          "roe": "roe", "estimatedPer": "per_fwd"}
 
 
-def _to_num(s):
-    return pd.to_numeric(s.astype(str).str.replace(",", "").str.replace("%", "").replace({"N/A": None, "-": None}), errors="coerce")
+def _num(x):
+    try:
+        v = str(x).replace(",", "").replace("%", "").replace("배", "").replace("원", "").strip()
+        return float(v) if v not in ("", "-", "N/A") else None
+    except Exception:
+        return None
 
 
-def fetch_fundamentals() -> pd.DataFrame:
-    sess = requests.Session()
-    sess.headers.update(config.REQUEST_HEADERS)
-    rows = []
-    for market, sosok in SOSOK.items():
-        if market not in config.MARKETS:
-            continue
-        try:
-            sess.post(FIELD_SUBMIT, data={"menu": "market_sum", "returnUrl": f"{MARKET_SUM}?sosok={sosok}", "fieldIds": FIELDS}, timeout=10)
-        except Exception as e:
-            print(f"[네이버] 항목 설정 실패: {e}")
-        page = 1
-        while page <= 80:
-            try:
-                html = sess.get(f"{MARKET_SUM}?sosok={sosok}&page={page}", timeout=10).text
-            except Exception:
-                break
-            codes = re.findall(r'href="/item/main\.naver\?code=(\d{6})"', html)
-            if not codes:
-                break
-            try:
-                tables = pd.read_html(StringIO(html))
-                tbl = next(t for t in tables if "종목명" in t.columns)
-            except Exception:
-                break
-            tbl = tbl.dropna(subset=["종목명"]).reset_index(drop=True)
-            codes = list(dict.fromkeys(codes))  # 순서 유지 중복 제거
-            if len(codes) != len(tbl):
-                codes = codes[:len(tbl)]
-            tbl = tbl.iloc[:len(codes)].copy()
-            tbl["ticker"] = codes
-            keep = {k: v for k, v in COL_MAP.items() if k in tbl.columns}
-            sub = tbl[["ticker"] + list(keep.keys())].rename(columns=keep)
-            rows.append(sub)
-            page += 1
-            time.sleep(config.REQUEST_SLEEP)
-        print(f"[네이버] {market} {page - 1}페이지 수집")
+def _parse_integration(j: dict) -> dict:
+    out = {}
+    for info in j.get("totalInfos", []) or []:
+        code = info.get("code")
+        if code in KEYMAP:
+            out[KEYMAP[code]] = _num(info.get("value"))
+    ind = j.get("industryCodeType") or {}
+    out["sector_hint"] = ind.get("industryGroupKor") or ind.get("name")
+    # 연간 실적 증가율 (있으면)
+    try:
+        ann = [x for x in (j.get("financeInfo", {}) or {}).get("rowList", []) if x.get("title") in ("영업이익", "매출액")]
+        for row in ann:
+            cols = [c for c in row.get("columns", {}).values()] if isinstance(row.get("columns"), dict) else []
+            vals = [_num(c.get("value")) for c in cols if isinstance(c, dict)]
+            vals = [v for v in vals if v is not None]
+            if len(vals) >= 2 and vals[-2] not in (0, None):
+                g = (vals[-1] - vals[-2]) / abs(vals[-2]) * 100
+                out["op_growth" if row["title"] == "영업이익" else "sales_growth"] = g
+    except Exception:
+        pass
+    return out
 
-    if not rows:
-        print("[네이버] 재무지표 수집 실패 → 실적 축 중립 처리")
-        return pd.DataFrame(columns=["ticker"] + list(COL_MAP.values()))
 
-    df = pd.concat(rows, ignore_index=True).drop_duplicates("ticker")
-    for c in COL_MAP.values():
-        if c in df.columns:
-            df[c] = _to_num(df[c])
+def fetch_fundamentals(universe: pd.DataFrame = None) -> pd.DataFrame:
+    if universe is None:
+        universe = pd.read_csv(os.path.join(config.DATA_DIR, "universe.csv"), dtype={"ticker": str})
+    tickers = universe.loc[~universe["excluded"], "ticker"].tolist()
     os.makedirs(config.DATA_DIR, exist_ok=True)
-    df.to_csv(os.path.join(config.DATA_DIR, "fundamentals.csv"), index=False, encoding="utf-8-sig")
-    print(f"[네이버] 재무지표 {len(df)}종목 완료")
+    path = os.path.join(config.DATA_DIR, "fundamentals.csv")
+
+    sess = requests.Session()
+    sess.headers.update(MOBILE_HEADERS)
+    try:
+        probe = sess.get(INTEG_URL.format(code="005930"), timeout=10).json()
+        ok = bool(probe.get("totalInfos"))
+    except Exception as e:
+        ok = False
+        print(f"[실적] 모바일 API 접근 실패: {e}")
+
+    rows = []
+    if ok:
+        failed = 0
+        for i, t in enumerate(tickers):
+            try:
+                d = _parse_integration(sess.get(INTEG_URL.format(code=t), timeout=10).json())
+                d["ticker"] = t
+                rows.append(d)
+            except Exception:
+                failed += 1
+            if i % 500 == 0 and i > 0:
+                print(f"  실적 진행 {i}/{len(tickers)}")
+            time.sleep(0.05)
+        print(f"[실적] 네이버 모바일 API {len(rows)}종목 (실패 {failed})")
+    else:
+        print("[실적] yfinance 대체 경로 (예비 스코어 상위 K종목) — fetch_fundamentals_yf 에서 처리")
+
+    df = pd.DataFrame(rows)
+    if df.empty:
+        df = pd.DataFrame(columns=["ticker", "per", "pbr", "eps", "dividend_yield", "frgn_rate", "roe", "op_growth", "sales_growth", "sector_hint"])
+    df.to_csv(path, index=False, encoding="utf-8-sig")
+    return df
+
+
+def fetch_fundamentals_yf(tickers, universe: pd.DataFrame) -> pd.DataFrame:
+    """모바일 API가 막힌 경우: yfinance로 상위 K종목만 (느리므로 K 제한)"""
+    path = os.path.join(config.DATA_DIR, "fundamentals.csv")
+    existing = pd.read_csv(path, dtype={"ticker": str}) if os.path.exists(path) else pd.DataFrame()
+    if not existing.empty and existing["per"].notna().sum() > 50:
+        return existing  # 이미 수집됨
+    try:
+        import yfinance as yf
+    except Exception:
+        return existing
+    mk = universe.set_index("ticker")["market"].to_dict()
+    rows = []
+    for i, t in enumerate(tickers):
+        sym = f"{t}.KS" if mk.get(t) == "KOSPI" else f"{t}.KQ"
+        try:
+            info = yf.Ticker(sym).info or {}
+            rows.append({"ticker": t, "per": info.get("trailingPE"), "pbr": info.get("priceToBook"),
+                         "roe": (info.get("returnOnEquity") or 0) * 100 if info.get("returnOnEquity") is not None else None,
+                         "op_growth": (info.get("earningsGrowth") or 0) * 100 if info.get("earningsGrowth") is not None else None,
+                         "sales_growth": (info.get("revenueGrowth") or 0) * 100 if info.get("revenueGrowth") is not None else None,
+                         "dividend_yield": (info.get("dividendYield") or 0) * 100 if info.get("dividendYield") is not None else None})
+        except Exception:
+            pass
+        if i % 50 == 0 and i > 0:
+            print(f"  yfinance 진행 {i}/{len(tickers)}")
+        time.sleep(0.2)
+    df = pd.DataFrame(rows)
+    if not df.empty:
+        df.to_csv(path, index=False, encoding="utf-8-sig")
+        print(f"[실적] yfinance {df['per'].notna().sum()}/{len(df)}종목 확보")
     return df
 
 
 def fetch_credit_ratio(tickers) -> pd.DataFrame:
-    """종목별 메인 페이지에서 신용비율(%) 추출"""
-    sess = requests.Session()
-    sess.headers.update(config.REQUEST_HEADERS)
-    out = []
-    pat = re.compile(r"신용비율.*?<em>\s*([\d.,]+)\s*%?", re.S)
-    for i, t in enumerate(tickers):
-        try:
-            html = sess.get(ITEM_MAIN.format(code=t), timeout=10).text
-            m = pat.search(html)
-            val = float(m.group(1).replace(",", "")) if m else None
-        except Exception:
-            val = None
-        out.append({"ticker": t, "credit_ratio": val})
-        time.sleep(config.REQUEST_SLEEP)
-        if i % 100 == 0 and i > 0:
-            print(f"  신용비율 진행 {i}/{len(tickers)}")
-    df = pd.DataFrame(out)
-    df.to_csv(os.path.join(config.DATA_DIR, "credit_ratio.csv"), index=False, encoding="utf-8-sig")
-    ok = df["credit_ratio"].notna().sum()
-    print(f"[네이버] 신용비율 {ok}/{len(df)}종목 확보")
-    return df
+    """네이버 PC 페이지 차단으로 신용비율 수집 불가 → 생략"""
+    print("[신용비율] 네이버 PC 페이지 해외 접속 차단으로 생략")
+    return pd.DataFrame(columns=["ticker", "credit_ratio"])
 
 
 if __name__ == "__main__":
