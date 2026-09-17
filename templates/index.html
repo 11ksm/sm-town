@@ -82,12 +82,14 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:24px}
 .usgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:8px;margin-bottom:14px}
 .idx{background:var(--chip);border-radius:10px;padding:10px 12px}
 .idx .k{font-size:12.5px;color:var(--muted);display:flex;justify-content:space-between}.idx .v{font-size:19px;font-weight:800;margin-top:3px}.idx .c{font-size:14px;font-weight:700;margin-top:1px}
-.usbody{display:grid;grid-template-columns:180px 1fr;gap:18px;align-items:center;border-top:1px solid var(--line);padding-top:14px}
+.usbody{display:grid;grid-template-columns:200px 1fr;gap:22px;align-items:center;border-top:1px solid var(--line);padding-top:14px}
 @media (max-width:640px){.usbody{grid-template-columns:1fr}}
 .fng{text-align:center;background:var(--chip);border-radius:10px;padding:12px 8px 10px}
 .fng .sc{font-size:30px;font-weight:900;margin-top:-4px;line-height:1}.fng .lb{font-size:14px;font-weight:800;margin-top:4px}
 .fng .hist{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.5}
-.fng .ttl{font-size:11px;color:var(--muted);letter-spacing:.5px;margin-top:6px}
+.fng .ttl{font-size:11.5px;color:var(--muted);margin-top:8px}
+.fngt{margin:8px auto 0;border-collapse:collapse;min-width:0;width:auto;font-size:12.5px}
+.fngt td{padding:1px 8px;border:0;white-space:nowrap}.fngt td:first-child{color:var(--muted);text-align:right}.fngt td:last-child{font-weight:700;text-align:left}
 .review{font-size:15.5px;line-height:1.8;margin:0;padding-left:0;list-style:none}
 .review li{padding-left:16px;position:relative;margin-bottom:4px}
 .review li::before{content:"";position:absolute;left:0;top:11px;width:7px;height:7px;border-radius:50%;background:var(--orange)}
@@ -122,7 +124,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:24px}
 <body>
 <header>
   <h1>KR Stock Radar <span class="badge">수원WM</span></h1>
-  <div class="sub">코스피·코스닥 전종목 5축 스코어링 · 매일 08:30 자동 갱신 · 최종 업데이트 <span id="updated"></span></div>
+  <div class="sub">코스피·코스닥 전종목 5축 스코어링 · 매일 07:30 자동 갱신 · 최종 업데이트 <span id="updated"></span></div>
 </header>
 <main>
   <div class="stats" id="stats"></div>
@@ -348,13 +350,13 @@ function renderUS(){
   }).join("");
   const f=U.fng&&U.fng.score!==undefined?U.fng:null;
   const lab = f? (f.label_ko || {"extreme fear":"극단적 공포","fear":"공포","neutral":"중립","greed":"탐욕","extreme greed":"극단적 탐욕"}[(f.rating||"").toLowerCase()] || "") : "";
-  const hist = f? [["전일",f.prev_close],["1주전",f.week_ago??f.prev_week],["1달전",f.month_ago??f.prev_month]].filter(x=>x[1]!==null&&x[1]!==undefined&&x[1]!==0).map(x=>`${x[0]} ${x[1]}`).join(" · ") : "";
+  const hist = f? `<table class="fngt">${[["전일",f.prev_close],["1주전",f.week_ago??f.prev_week],["1달전",f.month_ago??f.prev_month]].filter(x=>x[1]!==null&&x[1]!==undefined&&x[1]!==0).map(x=>`<tr><td>${x[0]}</td><td>${x[1]}</td></tr>`).join("")}</table>` : "";
   const col = f? (f.score<=25?"#c0392b":f.score<=45?"#e67e22":f.score<=55?"#7f8c8d":f.score<=75?"#5aa634":"#1f9d55") : "";
-  const fng = f? `<div class="fng">${fngGauge(f.score)}<div class="sc" style="color:${col}">${f.score}</div><div class="lb" style="color:${col}">${lab}</div>${hist?`<div class="hist">${hist}</div>`:""}<div class="ttl">CNN FEAR &amp; GREED</div></div>`
+  const fng = f? `<div class="fng">${fngGauge(f.score)}<div class="sc" style="color:${col}">${f.score}</div><div class="lb" style="color:${col}">${lab}</div>${hist?`<div class="hist">${hist}</div>`:""}<div class="ttl">CNN 공포·탐욕지수</div></div>`
                : `<div class="fng" style="color:var(--muted);font-size:13px;padding:24px 8px">공포·탐욕지수<br>수집 실패</div>`;
   const rv = Array.isArray(U.review)?U.review:String(U.review||"").split(/(?<=\.)\s+/).filter(Boolean);
   const em = t => t.replace(/^([^—]+?)(\s—\s)/, "<b>$1</b>$2").replace(/([+-]\d+\.\d+%|[+-]\d+bp)/g, m=>`<b class="${m.startsWith('-')?'neg':'pos'}">${m}</b>`);
-  const heads = Array.isArray(U.headlines)&&U.headlines.length? `<ul class="heads">${U.headlines.slice(0,4).map(h=>`<li>· <a href="${h.link}" target="_blank" rel="noopener">${h.title}</a></li>`).join("")}</ul>` : "";
+  const heads = "";
   el.innerHTML=`<div class="us"><h2><span class="tag">US MARKET</span>미국시장 브리핑 <small>전일 뉴욕장 마감 기준 · 자동 생성 요약</small></h2><div class="usgrid">${cards}</div><div class="usbody">${fng}<div><ul class="review">${rv.map(t=>`<li>${em(t)}</li>`).join("")}</ul>${heads}</div></div></div>`;
 }
 renderUS();
