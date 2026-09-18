@@ -6,7 +6,7 @@ import os
 
 # ===== 유니버스 =====
 MARKETS = ["KOSPI", "KOSDAQ"]
-MIN_MARKET_CAP = 0            # 시가총액 하한(원). 0 = 전체. 실행시간이 길면 30_000_000_000(300억) 권장
+MIN_MARKET_CAP = 100_000_000_000   # 시가총액 하한(원). 1,000억 미만 제외
 EXCLUDE_ADMIN_ISSUES = True   # 관리종목 제외
 EXCLUDE_ALERT_LEVELS = ["caution", "warning", "risk"]  # 투자주의/투자경고/투자위험 제외
 EXCLUDE_KEYWORDS = ["스팩", "SPAC", "우B", "우C"]  # 종목명 키워드 기반 제외 (스팩·우선주 일부)
@@ -29,7 +29,7 @@ WEIGHTS = {
 
 # ===== 결과/화면 =====
 TOP_N = 25                    # 메인 표 노출 종목 수
-EMBED_N = 300                 # 필터/검색용으로 페이지에 내장할 종목 수
+EMBED_N = 1500                # 필터/검색용으로 페이지에 내장할 종목 수 (1,000억↑ 전 종목 검색 가능)
 NEW_PICK_RANK_JUMP = 20       # "오늘의 신규 포착" 기준: 순위 20계단 이상 급등
 HISTORY_KEEP_DAYS = 120       # 히스토리 보관 일수
 HISTORY_TRACK_N = 100         # 히스토리에 매일 기록할 상위 종목 수
