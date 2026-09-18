@@ -2,7 +2,8 @@ name: KR Stock Radar - Daily Update
 
 on:
   schedule:
-    - cron: "30 23 * * 0-4"   # UTC 23:30 = KST 08:30, 한국 평일(월~금)
+    - cron: "30 22 * * 0-4"   # UTC 22:30 = KST 07:30, 한국 평일(월~금)
+    - cron: "15 23 * * 0-4"   # UTC 23:15 = KST 08:15, 첫 예약이 건너뛰어졌을 때 대비
   workflow_dispatch: {}
 
 permissions:
@@ -10,16 +11,18 @@ permissions:
 
 concurrency:
   group: daily-update
-  cancel-in-progress: false
+  cancel-in-progress: true   # 실행 중 새로 시작되면 이전 실행은 취소 (충돌 방지)
 
 jobs:
   update:
     runs-on: ubuntu-latest
     timeout-minutes: 300
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: pip
@@ -36,7 +39,19 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # 생성된 결과물을 임시 보관
+          mkdir -p /tmp/out && cp -r docs/. /tmp/out/
+
+          # 원격 최신 상태로 맞춘 뒤, 이번 실행 결과로 docs/ 를 통째로 덮어쓰기
+          git fetch origin main
+          git reset --hard origin/main
+          rm -rf docs && mkdir docs && cp -r /tmp/out/. docs/
+
           git add docs/
-          git diff --cached --quiet || git commit -m "chore: daily update $(TZ=Asia/Seoul date +'%Y-%m-%d')"
-          git pull --rebase origin main || true
-          git push
+          if git diff --cached --quiet; then
+            echo "변경 없음"
+            exit 0
+          fi
+          git commit -m "chore: daily update $(TZ=Asia/Seoul date +'%Y-%m-%d %H:%M')"
+          git push origin HEAD:main
