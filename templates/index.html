@@ -143,11 +143,12 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:24px}
     <div class="filters">
       <div class="seg" id="mkt"><button data-v="" class="on">전체</button><button data-v="KOSPI">코스피</button><button data-v="KOSDAQ">코스닥</button></div>
       <select id="sector"><option value="">전체 업종</option></select>
+      <div class="seg" id="cap"><button data-v="" class="on">전체 시총</button><button data-v="L">대형 1조↑</button><button data-v="M">중형</button><button data-v="S">소형</button></div>
       <div class="seg" id="grade"><button data-v="" class="on">전체 등급</button><button data-v="A">A</button><button data-v="B">B+</button></div>
       <div class="seg" id="lim"><button data-v="25" class="on">TOP 25</button><button data-v="50">TOP 50</button><button data-v="0">전체</button></div>
       <input id="q" placeholder="종목명 / 코드 검색">
     </div>
-    <div class="legend">등급 A ≥70 · B 60~70 · C 50~60 · D &lt;50 — <b id="openGuide">가중치·등급 기준 보기</b> · 열 제목 클릭 정렬 · ★ 즐겨찾기(이 브라우저에만 저장)</div>
+    <div class="legend">시총·업종·검색 필터를 쓰면 TOP N 제한 없이 해당 그룹 내 상위 종목이 표시됩니다 · 등급 A ≥70 · B 60~70 · C 50~60 · D &lt;50 — <b id="openGuide">가중치·등급 기준 보기</b> · 열 제목 클릭 정렬 · ★ 즐겨찾기(이 브라우저에만 저장)</div>
     <div class="wrap">
       <table id="tbl">
         <thead><tr>
@@ -179,7 +180,7 @@ let fav = new Set(); try { fav = new Set(JSON.parse(localStorage.getItem(FAV_KEY
 function saveFav(){ try { localStorage.setItem(FAV_KEY, JSON.stringify([...fav])); } catch(e) {} }
 const AXN = {supply:"수급",technical:"기술",event:"재료",fundamental:"실적",risk:"리스크"};
 const AXL = ["수급","기술","재료","실적","리스크"];
-let state = { tab:"all", mkt:"", sector:"", grade:"", lim:25, q:"", sortK:"rank", sortAsc:true };
+let state = { tab:"all", mkt:"", sector:"", grade:"", cap:"", lim:25, q:"", sortK:"rank", sortAsc:true };
 
 function evShort(t){
   if(!t) return "";
@@ -231,9 +232,13 @@ function getRows(){
   let rows = D.rows;
   if(state.tab==="new") rows = rows.filter(r=>D.new_picks.includes(r.t));
   else if(state.tab==="fav") rows = rows.filter(r=>fav.has(r.t));
-  else if(state.lim>0) rows = rows.filter(r=>r.rank<=state.lim);
+  else if(state.lim>0 && !state.cap && !state.sector && !state.q) rows = rows.filter(r=>r.rank<=state.lim);
+  else if(state.lim>0) rows = rows.slice(0, Math.max(state.lim, 25));
   if(state.mkt) rows = rows.filter(r=>r.m===state.mkt);
   if(state.sector) rows = rows.filter(r=>r.s===state.sector);
+  if(state.cap==="L") rows = rows.filter(r=>(r.cap||0)>=10000);
+  if(state.cap==="M") rows = rows.filter(r=>(r.cap||0)>=3000&&(r.cap||0)<10000);
+  if(state.cap==="S") rows = rows.filter(r=>(r.cap||0)<3000);
   if(state.grade==="A") rows = rows.filter(r=>r.total>=70);
   if(state.grade==="B") rows = rows.filter(r=>r.total>=60);
   if(state.q){ const q=state.q.toLowerCase(); rows = rows.filter(r=>r.n.toLowerCase().includes(q)||r.t.includes(q)); }
@@ -321,7 +326,7 @@ document.getElementById("openGuide").addEventListener("click", openModal);
 document.getElementById("closeMd").addEventListener("click", ()=>document.getElementById("ov").classList.remove("on"));
 document.getElementById("ov").addEventListener("click", e=>{ if(e.target.id==="ov") e.target.classList.remove("on"); });
 document.getElementById("tabs").addEventListener("click",e=>{ const b=e.target.closest(".tab"); if(!b) return; state.tab=b.dataset.tab; render(); });
-["mkt","lim","grade"].forEach(id=>document.getElementById(id).addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; state[id]= id==="lim"? +b.dataset.v : b.dataset.v; [...b.parentNode.children].forEach(x=>x.classList.toggle("on",x===b)); render(); }));
+["mkt","lim","grade","cap"].forEach(id=>document.getElementById(id).addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; state[id]= id==="lim"? +b.dataset.v : b.dataset.v; [...b.parentNode.children].forEach(x=>x.classList.toggle("on",x===b)); render(); }));
 secSel.addEventListener("change",e=>{ state.sector=e.target.value; render(); });
 document.getElementById("q").addEventListener("input",e=>{ state.q=e.target.value.trim(); render(); });
 document.querySelector("#tbl thead").addEventListener("click",e=>{ const th=e.target.closest("th"); if(!th||!th.dataset.k) return; const k=th.dataset.k; if(state.sortK===k) state.sortAsc=!state.sortAsc; else { state.sortK=k; state.sortAsc = (k==="rank"||k==="n"||k==="sr"); } render(); });
