@@ -98,7 +98,7 @@ def _from_naver_mobile() -> pd.DataFrame:
                     continue
                 # 시총: marketValue(억 단위 문자열) 또는 marketValueFull(원)
                 cap = None
-                for k in ("marketValueFull", "marketValue", "marketSum"):
+                for k in ("marketValueFull", "marketValueKrw", "marketValue", "marketSum", "marketCap", "totalMarketValue", "marketValueHangeul"):
                     if s.get(k) is not None:
                         v = _num(s.get(k))
                         if v is not None:
@@ -257,10 +257,24 @@ def build_universe() -> pd.DataFrame:
             pass
     df["sector"] = df["sector"].fillna("기타").replace({"": "기타", "nan": "기타"})
 
+    # 시총이 비어있는 종목은 캐시 값으로 보완
+    if os.path.exists(CACHE_PATH):
+        try:
+            oldcap = pd.read_csv(CACHE_PATH, dtype={"ticker": str}).set_index("ticker")["market_cap"]
+            miss = df["market_cap"] <= 0
+            df.loc[miss, "market_cap"] = df.loc[miss, "ticker"].map(oldcap).fillna(0)
+        except Exception:
+            pass
+    cap_cover = float((df["market_cap"] > 0).mean()) if len(df) else 0
+    print(f"[유니버스] 시총 확보율 {cap_cover*100:.0f}%")
+
     df["excluded"], df["exclude_reason"] = False, ""
     if config.MIN_MARKET_CAP > 0:
-        m = df["market_cap"] < config.MIN_MARKET_CAP
-        df.loc[m, ["excluded", "exclude_reason"]] = [True, "시총 하한 미달"]
+        if cap_cover >= 0.5:
+            m = (df["market_cap"] > 0) & (df["market_cap"] < config.MIN_MARKET_CAP)
+            df.loc[m, ["excluded", "exclude_reason"]] = [True, "시총 하한 미달"]
+        else:
+            print("[유니버스] ⚠ 시총 데이터 부족 → 시총 하한 필터 건너뜀 (전 종목 스크리닝)")
     for kw in config.EXCLUDE_KEYWORDS:
         m = df["name"].astype(str).str.contains(kw, case=False, na=False) & ~df["excluded"]
         df.loc[m, ["excluded", "exclude_reason"]] = [True, f"키워드({kw})"]
@@ -273,7 +287,14 @@ def build_universe() -> pd.DataFrame:
     os.makedirs(config.STATE_DIR, exist_ok=True)
     df.to_csv(os.path.join(config.DATA_DIR, "universe.csv"), index=False, encoding="utf-8-sig")
     df.to_csv(CACHE_PATH, index=False, encoding="utf-8-sig")  # 다음 실행 대비 캐시 갱신
-    print(f"[유니버스] 총 {len(df)}종목, 제외 {int(df['excluded'].sum())}종목, 스크리닝 대상 {int((~df['excluded']).sum())}종목")
+    n_ok = int((~df["excluded"]).sum())
+    print(f"[유니버스] 총 {len(df)}종목, 제외 {int(df['excluded'].sum())}종목, 스크리닝 대상 {n_ok}종목")
+    if n_ok < 100:
+        print("[유니버스] ⚠ 스크리닝 대상이 너무 적음 → 시총·키워드 제외를 해제하고 진행")
+        keep = df["exclude_reason"].isin(["관리종목", "투자주의", "투자경고", "투자위험"])
+        df["excluded"] = keep
+        df.loc[~keep, "exclude_reason"] = ""
+        df.to_csv(os.path.join(config.DATA_DIR, "universe.csv"), index=False, encoding="utf-8-sig")
     return df
 
 
