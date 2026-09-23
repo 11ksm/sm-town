@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>시장심리 · KR Stock Radar</title>
+<style>
+:root{--navy:#0b1f3a;--orange:#e8621f;--bg:#f4f6f9;--card:#fff;--line:#e3e7ee;--text:#1b1f27;--muted:#6b7280;--chip:#eef1f6;--up:#d1440f;--down:#1c56c9}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f141c;--card:#171e29;--line:#273140;--text:#e6e9ef;--muted:#98a2b3;--chip:#222b38}}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;background:var(--bg);color:var(--text)}
+header{background:var(--navy);color:#fff;padding:14px 16px 0}
+.brand{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.brand h1{margin:0;font-size:19px}
+.badge{background:var(--orange);color:#fff;font-size:10px;padding:2px 7px;border-radius:9px}
+.sub{font-size:12.5px;opacity:.75;margin-top:4px}
+nav{display:flex;gap:4px;margin-top:12px}
+nav a{color:#fff;text-decoration:none;padding:9px 14px;font-size:14px;border-radius:8px 8px 0 0;opacity:.75}
+nav a.on{background:var(--bg);color:var(--text);opacity:1;font-weight:700}
+main{max-width:1100px;margin:0 auto;padding:14px 12px}
+h2.t{font-size:26px;margin:6px 0 4px}
+h2.t span{color:var(--orange)}
+.lead{color:var(--muted);font-size:14px;margin:0 0 14px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+.card h3{margin:0;font-size:16px;text-align:center}
+.card .cap{font-size:12px;color:var(--muted);text-align:center;margin-top:2px}
+.g{display:block;margin:6px auto 0;max-width:300px;width:100%}
+.big{font-size:44px;font-weight:900;text-align:center;line-height:1;margin-top:-6px}
+.lbl{text-align:center;font-weight:800;font-size:16px;margin-top:2px}
+.leg{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:10px}
+.leg i{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:-1px;margin-right:3px}
+.row2{display:grid;grid-template-columns:1.4fr 1fr;gap:12px;margin-top:12px}
+@media (max-width:760px){.row2{grid-template-columns:1fr}}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:9px 8px;border-bottom:1px solid var(--line);text-align:center}
+th{background:var(--chip);color:var(--muted);font-size:12px}
+td:first-child{text-align:left;font-weight:600}
+.pill{display:inline-block;padding:2px 10px;border-radius:9px;color:#fff;font-size:12px;font-weight:700;margin-left:6px}
+.stat{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+.stat div{background:var(--chip);border-radius:10px;padding:10px}
+.stat .k{font-size:11.5px;color:var(--muted)}.stat .v{font-size:19px;font-weight:800;margin-top:2px}
+.reading{border-left:4px solid var(--orange);background:var(--chip);border-radius:8px;padding:12px 14px;margin-top:12px}
+.reading b{display:block;font-size:15px;margin-bottom:4px}
+.reading p{margin:0;font-size:13.5px;line-height:1.6}
+.reading small{display:block;color:var(--muted);font-size:11.5px;margin-top:6px}
+.comp td:nth-child(2){text-align:left}
+.bar{height:8px;background:var(--chip);border-radius:4px;overflow:hidden;min-width:120px}
+.bar i{display:block;height:100%;border-radius:4px}
+.chart{width:100%;height:auto;display:block}
+.note{background:#fff7ed;border:1px solid #fed7aa;color:#7c4a1e;border-radius:8px;padding:9px 12px;font-size:12.5px;line-height:1.5;margin-top:12px}
+footer{text-align:center;color:var(--muted);font-size:11px;padding:24px}
+.pos{color:var(--up)}.neg{color:var(--down)}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><h1>KR Stock Radar</h1><span class="badge">수원WM</span><span class="sub">최종 업데이트 <span id="upd"></span></span></div>
+  <nav><a href="index.html">종목 스크리닝</a><a class="on" href="sentiment.html">시장심리</a><a href="buyback.html">자사주 CHECK</a></nav>
+</header>
+<main>
+  <h2 class="t">시장심리 <span>CHECK</span></h2>
+  <p class="lead">지수 하나가 아니라 종목 단위 데이터로 읽는 시장 심리 — 저점을 찾는 <b>공포·탐욕 지수</b>, 고점을 찾는 <b>과열도 지수</b>, 미국 F&amp;G 비교, 1년 히스토리</p>
+
+  <div class="grid3" id="gauges"></div>
+
+  <div class="row2">
+    <div class="card">
+      <table id="histTbl"><thead><tr><th>시점</th><th>한국 공포·탐욕</th><th>미국 F&amp;G</th><th>한국 과열도</th></tr></thead><tbody></tbody></table>
+    </div>
+    <div class="card">
+      <div class="stat" id="stats"></div>
+      <div class="reading" id="reading"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:12px">
+    <h3 style="text-align:left">1년 히스토리 <span style="font-size:12px;color:var(--muted);font-weight:400">공포·탐욕(주황) · 과열도(파랑) · 코스피(회색, 우측축)</span></h3>
+    <svg id="chart" class="chart" viewBox="0 0 900 300"></svg>
+  </div>
+
+  <div class="row2">
+    <div class="card"><h3 style="text-align:left">공포·탐욕 구성지표 <span style="font-size:12px;color:var(--muted);font-weight:400">각 지표를 과거 1년 대비 백분위(0~100)로 환산 후 평균</span></h3><table class="comp" id="fgComp"><tbody></tbody></table></div>
+    <div class="card"><h3 style="text-align:left">과열도 구성지표</h3><table class="comp" id="heatComp"><tbody></tbody></table></div>
+  </div>
+  <div class="note">본 지수는 공개 시세·수급 데이터로 자체 산출한 참고 지표이며, 특정 시점의 매수·매도를 권유하는 것이 아닙니다. 판독 문구는 두 지수 조합의 일반적 해석입니다.</div>
+</main>
+<footer>KR Stock Radar · 자체 산출 (KRX 시세 · 네이버 수급 · Yahoo Finance) · 미국 F&amp;G: CNN Business</footer>
+<script>
+const D = {"updated": "2026-09-23 11:40 KST", "us": {"indices": {"S&P 500": {"last": 7764.64, "chg": -0.06, "pct": -0.0, "date": "09/22"}, "나스닥": {"last": 27244.28, "chg": 122.19, "pct": 0.45, "date": "09/22"}, "다우": {"last": 51863.69, "chg": -185.14, "pct": -0.36, "date": "09/22"}, "필라델피아 반도체": {"last": 12689.82, "chg": 256.65, "pct": 2.06, "date": "09/22"}, "VIX": {"last": 14.21, "chg": -0.66, "pct": -4.44, "date": "09/22"}, "미 10년물(%)": {"last": 4.97, "chg": 0.01, "pct": 0.1, "date": "09/22"}, "원/달러": {"last": 1351.13, "chg": -22.55, "pct": -1.64, "date": "09/23"}}, "fng": {"score": 35, "label_ko": "공포", "prev_close": 34, "week_ago": 28, "month_ago": 55}, "headlines": [{"title": "Trump administration is examining whether a diesel export ban is feasible, Treasury Secretary says", "link": "https://www.cnbc.com/2026/09/22/trump-diesel-export-ban-urkaine-russia-iran.html"}, {"title": "In photos: Key takeaways from day one of the UN General Assembly", "link": "https://www.cnbc.com/2026/09/23/unga-trump-iran-china-greenland-ukraine-russia-.html"}, {"title": "Trump administration removes around 760,000 Obamacare enrollments, alleging fraud", "link": "https://www.cnbc.com/2026/09/22/trump-administration-removes-around-760000-obamacare-enrollments.html"}, {"title": "Trump discloses more than 1,100 July trades, including up to $25 million each in sales of Microsoft, Amazon", "link": "https://www.cnbc.com/2026/09/22/trump-trades-microsoft-amazon-july-financial-disclosure.html"}], "review": ["소폭 지수 혼조 — S&P 500 -0.00%, 나스닥 +0.45%, 다우 -0.36%", "반도체지수 +2.06% → 국내 반도체·장비 업종에 우호적", "VIX 14.2 — 변동성 안정 구간", "원/달러 1,351원 (-1.64%) — 외국인 수급에 긍정적", "Fear&Greed 35 '공포' (전일 대비 +1)"]}, "date": "2026-09-23", "fg": {"now": 54.3, "label": "중립", "prev": 45.0, "week": 47.6, "month": 60.1, "components": [{"key": "momentum", "name": "시장 모멘텀", "score": 19.0}, {"key": "strength", "name": "주가 강도(신고가-신저가)", "score": 16.9}, {"key": "breadth", "name": "시장 폭(상승종목 비율)", "score": 58.8}, {"key": "volatility", "name": "변동성(역방향)", "score": 99.0}, {"key": "risk", "name": "위험선호(코스닥-코스피)", "score": 53.4}, {"key": "fx", "name": "원화 강세(환율 역방향)", "score": 78.5}, {"key": "foreign", "name": "외국인 순매수", "score": null}]}, "heat": {"now": 46.8, "label": "보통", "prev": 39.6, "week": 31.8, "month": 47.4, "components": [{"key": "rsi", "name": "코스피 RSI(14)", "score": 71.6}, {"key": "above20", "name": "20일선 상회 종목 비율", "score": 51.0}, {"key": "rsi70", "name": "RSI 70 초과 종목 비율", "score": 65.4}, {"key": "ret20", "name": "코스피 20일 수익률", "score": 45.7}, {"key": "turnover", "name": "거래대금(20일/120일)", "score": 0.0}]}, "stats": {"new_high": 22, "new_low": 113, "adv_ratio_20d": 44.8, "above_ma20": 38.0, "kospi": 7092.43, "kospi_chg": 1.21, "kosdaq": 841.61, "kosdaq_chg": 0.64, "n_stocks": 2450}, "history": [{"d": "2025-12-22", "fg": 49.2, "heat": 82.5, "k": 4105.93}, {"d": "2025-12-23", "fg": 48.4, "heat": 55.7, "k": 4117.32}, {"d": "2025-12-24", "fg": 43.5, "heat": 58.1, "k": 4108.62}, {"d": "2025-12-26", "fg": 41.3, "heat": 46.0, "k": 4129.68}, {"d": "2025-12-29", "fg": 36.7, "heat": 39.8, "k": 4220.56}, {"d": "2025-12-30", "fg": 33.8, "heat": 38.5, "k": 4214.17}, {"d": "2026-01-02", "fg": 34.8, "heat": 54.5, "k": 4309.63}, {"d": "2026-01-05", "fg": 28.4, "heat": 59.0, "k": 4457.52}, {"d": "2026-01-06", "fg": 30.1, "heat": 57.4, "k": 4525.48}, {"d": "2026-01-07", "fg": 21.0, "heat": 44.2, "k": 4551.06}, {"d": "2026-01-08", "fg": 19.3, "heat": 42.1, "k": 4552.37}, {"d": "2026-01-09", "fg": 21.1, "heat": 48.6, "k": 4586.32}, {"d": "2026-01-12", "fg": 25.0, "heat": 63.2, "k": 4624.79}, {"d": "2026-01-13", "fg": 23.3, "heat": 61.0, "k": 4692.64}, {"d": "2026-01-14", "fg": 20.9, "heat": 66.8, "k": 4723.1}, {"d": "2026-01-15", "fg": 24.7, "heat": 78.6, "k": 4797.55}, {"d": "2026-01-16", "fg": 31.6, "heat": 75.3, "k": 4840.74}, {"d": "2026-01-19", "fg": 31.2, "heat": 82.2, "k": 4904.66}, {"d": "2026-01-20", "fg": 39.1, "heat": 83.5, "k": 4885.75}, {"d": "2026-01-21", "fg": 29.7, "heat": 76.6, "k": 4909.93}, {"d": "2026-01-22", "fg": 37.2, "heat": 83.7, "k": 4952.53}, {"d": "2026-01-23", "fg": 44.8, "heat": 84.7, "k": 4990.07}, {"d": "2026-01-26", "fg": 58.8, "heat": 86.4, "k": 4949.59}, {"d": "2026-01-27", "fg": 53.2, "heat": 92.8, "k": 5084.85}, {"d": "2026-01-28", "fg": 58.1, "heat": 93.1, "k": 5170.81}, {"d": "2026-01-29", "fg": 63.1, "heat": 94.6, "k": 5221.25}, {"d": "2026-01-30", "fg": 59.3, "heat": 89.0, "k": 5224.36}, {"d": "2026-02-02", "fg": 54.6, "heat": 64.5, "k": 4949.67}, {"d": "2026-02-03", "fg": 57.4, "heat": 77.1, "k": 5288.08}, {"d": "2026-02-04", "fg": 62.8, "heat": 80.2, "k": 5371.1}, {"d": "2026-02-05", "fg": 59.8, "heat": 68.2, "k": 5163.57}, {"d": "2026-02-06", "fg": 54.0, "heat": 60.4, "k": 5089.14}, {"d": "2026-02-09", "fg": 61.1, "heat": 70.5, "k": 5298.04}, {"d": "2026-02-10", "fg": 68.2, "heat": 70.8, "k": 5301.69}, {"d": "2026-02-11", "fg": 70.3, "heat": 71.8, "k": 5354.49}, {"d": "2026-02-12", "fg": 67.1, "heat": 76.9, "k": 5522.27}, {"d": "2026-02-13", "fg": 66.4, "heat": 70.7, "k": 5507.01}, {"d": "2026-02-19", "fg": 71.6, "heat": 76.6, "k": 5677.25}, {"d": "2026-02-20", "fg": 57.9, "heat": 78.3, "k": 5808.53}, {"d": "2026-02-23", "fg": 67.5, "heat": 78.7, "k": 5846.09}, {"d": "2026-02-24", "fg": 58.4, "heat": 81.2, "k": 5969.64}, {"d": "2026-02-25", "fg": 54.0, "heat": 87.4, "k": 6083.86}, {"d": "2026-02-26", "fg": 40.9, "heat": 81.2, "k": 6307.27}, {"d": "2026-02-27", "fg": 40.6, "heat": 73.7, "k": 6244.13}, {"d": "2026-03-03", "fg": 28.5, "heat": 43.5, "k": 5791.91}, {"d": "2026-03-04", "fg": 7.4, "heat": 13.2, "k": 5093.54}, {"d": "2026-03-05", "fg": 20.8, "heat": 22.1, "k": 5583.9}, {"d": "2026-03-06", "fg": 29.3, "heat": 27.2, "k": 5584.87}, {"d": "2026-03-09", "fg": 22.1, "heat": 13.9, "k": 5251.87}, {"d": "2026-03-10", "fg": 24.1, "heat": 17.8, "k": 5532.59}, {"d": "2026-03-11", "fg": 27.2, "heat": 24.5, "k": 5609.95}, {"d": "2026-03-12", "fg": 34.1, "heat": 25.8, "k": 5583.25}, {"d": "2026-03-13", "fg": 31.8, "heat": 20.8, "k": 5487.24}, {"d": "2026-03-16", "fg": 20.2, "heat": 22.8, "k": 5549.85}, {"d": "2026-03-17", "fg": 22.1, "heat": 22.8, "k": 5640.48}, {"d": "2026-03-18", "fg": 20.8, "heat": 29.1, "k": 5925.03}, {"d": "2026-03-19", "fg": 20.9, "heat": 23.2, "k": 5763.22}, {"d": "2026-03-20", "fg": 21.6, "heat": 28.0, "k": 5781.2}, {"d": "2026-03-23", "fg": 23.1, "heat": 15.2, "k": 5405.75}, {"d": "2026-03-24", "fg": 29.7, "heat": 42.6, "k": 5553.92}, {"d": "2026-03-25", "fg": 49.7, "heat": 40.1, "k": 5642.21}, {"d": "2026-03-26", "fg": 45.5, "heat": 34.1, "k": 5460.46}, {"d": "2026-03-27", "fg": 45.3, "heat": 42.4, "k": 5438.87}, {"d": "2026-03-30", "fg": 27.8, "heat": 29.2, "k": 5277.3}, {"d": "2026-03-31", "fg": 29.4, "heat": 16.7, "k": 5052.46}, {"d": "2026-04-01", "fg": 70.0, "heat": 37.5, "k": 5478.7}, {"d": "2026-04-02", "fg": 31.0, "heat": 17.0, "k": 5234.05}, {"d": "2026-04-03", "fg": 33.9, "heat": 22.6, "k": 5377.3}, {"d": "2026-04-06", "fg": 36.4, "heat": 24.0, "k": 5450.33}, {"d": "2026-04-07", "fg": 30.2, "heat": 16.2, "k": 5494.78}, {"d": "2026-04-08", "fg": 57.8, "heat": 35.4, "k": 5872.34}, {"d": "2026-04-09", "fg": 57.0, "heat": 31.0, "k": 5778.01}, {"d": "2026-04-10", "fg": 60.1, "heat": 49.0, "k": 5858.87}, {"d": "2026-04-13", "fg": 65.6, "heat": 45.6, "k": 5808.62}, {"d": "2026-04-14", "fg": 69.4, "heat": 50.5, "k": 5967.75}, {"d": "2026-04-15", "fg": 74.5, "heat": 56.4, "k": 6091.39}, {"d": "2026-04-16", "fg": 78.6, "heat": 63.8, "k": 6226.05}, {"d": "2026-04-17", "fg": 73.5, "heat": 64.6, "k": 6191.92}, {"d": "2026-04-20", "fg": 79.1, "heat": 72.4, "k": 6219.09}, {"d": "2026-04-21", "fg": 74.9, "heat": 70.6, "k": 6388.47}, {"d": "2026-04-22", "fg": 71.9, "heat": 75.4, "k": 6417.93}, {"d": "2026-04-23", "fg": 74.2, "heat": 78.4, "k": 6475.81}, {"d": "2026-04-24", "fg": 77.4, "heat": 79.5, "k": 6475.63}, {"d": "2026-04-27", "fg": 78.6, "heat": 83.8, "k": 6615.03}, {"d": "2026-04-28", "fg": 79.3, "heat": 81.9, "k": 6641.02}, {"d": "2026-04-29", "fg": 81.7, "heat": 83.4, "k": 6690.9}, {"d": "2026-04-30", "fg": 78.8, "heat": 78.6, "k": 6598.87}, {"d": "2026-05-04", "fg": 80.8, "heat": 81.0, "k": 6936.99}, {"d": "2026-05-06", "fg": 78.3, "heat": 76.3, "k": 7384.56}, {"d": "2026-05-07", "fg": 78.1, "heat": 73.2, "k": 7490.05}, {"d": "2026-05-08", "fg": 77.2, "heat": 70.0, "k": 7498.0}, {"d": "2026-05-11", "fg": 58.3, "heat": 67.4, "k": 7822.24}, {"d": "2026-05-12", "fg": 51.8, "heat": 57.1, "k": 7643.15}, {"d": "2026-05-13", "fg": 49.6, "heat": 59.5, "k": 7844.01}, {"d": "2026-05-14", "fg": 62.5, "heat": 60.4, "k": 7981.41}, {"d": "2026-05-15", "fg": 38.6, "heat": 50.3, "k": 7493.18}, {"d": "2026-05-18", "fg": 36.5, "heat": 48.6, "k": 7516.04}, {"d": "2026-05-19", "fg": 35.7, "heat": 43.6, "k": 7271.66}, {"d": "2026-05-20", "fg": 29.8, "heat": 43.0, "k": 7208.95}, {"d": "2026-05-21", "fg": 31.3, "heat": 50.5, "k": 7815.59}, {"d": "2026-05-22", "fg": 48.5, "heat": 51.2, "k": 7847.71}, {"d": "2026-05-26", "fg": 33.0, "heat": 50.7, "k": 8047.51}, {"d": "2026-05-27", "fg": 32.4, "heat": 50.9, "k": 8228.7}, {"d": "2026-05-28", "fg": 31.1, "heat": 49.3, "k": 8185.29}, {"d": "2026-05-29", "fg": 33.1, "heat": 53.0, "k": 8476.15}, {"d": "2026-06-01", "fg": 30.0, "heat": 53.4, "k": 8788.38}, {"d": "2026-06-02", "fg": 32.6, "heat": 55.6, "k": 8801.49}, {"d": "2026-06-04", "fg": 27.1, "heat": 51.2, "k": 8639.41}, {"d": "2026-06-05", "fg": 24.2, "heat": 37.6, "k": 8160.59}, {"d": "2026-06-08", "fg": 20.2, "heat": 28.6, "k": 7484.41}, {"d": "2026-06-09", "fg": 22.9, "heat": 36.4, "k": 8096.93}, {"d": "2026-06-10", "fg": 22.8, "heat": 24.6, "k": 7730.82}, {"d": "2026-06-11", "fg": 25.2, "heat": 26.6, "k": 7763.95}, {"d": "2026-06-12", "fg": 32.9, "heat": 26.9, "k": 8123.62}, {"d": "2026-06-15", "fg": 33.4, "heat": 32.5, "k": 8545.98}, {"d": "2026-06-16", "fg": 34.3, "heat": 39.3, "k": 8726.6}, {"d": "2026-06-17", "fg": 37.1, "heat": 40.7, "k": 8864.24}, {"d": "2026-06-18", "fg": 30.9, "heat": 42.4, "k": 9063.84}, {"d": "2026-06-19", "fg": 31.0, "heat": 40.4, "k": 9052.42}, {"d": "2026-06-22", "fg": 30.3, "heat": 33.9, "k": 9114.55}, {"d": "2026-06-23", "fg": 23.9, "heat": 21.7, "k": 8203.84}, {"d": "2026-06-24", "fg": 28.5, "heat": 24.9, "k": 8471.02}, {"d": "2026-06-25", "fg": 25.1, "heat": 30.2, "k": 8930.3}, {"d": "2026-06-26", "fg": 23.3, "heat": 28.3, "k": 8411.21}, {"d": "2026-06-29", "fg": 29.5, "heat": 23.9, "k": 8394.65}, {"d": "2026-06-30", "fg": 33.7, "heat": 26.9, "k": 8476.48}, {"d": "2026-07-01", "fg": 36.1, "heat": 26.4, "k": 8303.41}, {"d": "2026-07-02", "fg": 30.9, "heat": 16.8, "k": 7648.09}, {"d": "2026-07-03", "fg": 34.4, "heat": 20.5, "k": 8088.34}, {"d": "2026-07-06", "fg": 43.4, "heat": 25.2, "k": 8051.33}, {"d": "2026-07-07", "fg": 36.4, "heat": 15.1, "k": 7656.31}, {"d": "2026-07-08", "fg": 31.5, "heat": 12.9, "k": 7246.79}, {"d": "2026-07-09", "fg": 31.4, "heat": 12.0, "k": 7291.91}, {"d": "2026-07-10", "fg": 35.5, "heat": 19.2, "k": 7475.94}, {"d": "2026-07-13", "fg": 34.7, "heat": 16.4, "k": 6806.93}, {"d": "2026-07-14", "fg": 35.9, "heat": 15.5, "k": 6856.83}, {"d": "2026-07-15", "fg": 40.0, "heat": 21.5, "k": 7284.41}, {"d": "2026-07-16", "fg": 43.8, "heat": 26.5, "k": 6820.6}, {"d": "2026-07-20", "fg": 43.7, "heat": 14.2, "k": 6516.27}, {"d": "2026-07-21", "fg": 43.8, "heat": 14.9, "k": 6747.95}, {"d": "2026-07-22", "fg": 47.9, "heat": 15.7, "k": 6797.7}, {"d": "2026-07-23", "fg": 54.9, "heat": 25.8, "k": 7096.89}, {"d": "2026-07-24", "fg": 54.9, "heat": 20.3, "k": 6690.62}, {"d": "2026-07-27", "fg": 57.3, "heat": 20.8, "k": 6755.75}, {"d": "2026-07-28", "fg": 45.4, "heat": 9.7, "k": 6023.66}, {"d": "2026-07-29", "fg": 44.1, "heat": 7.3, "k": 5663.24}, {"d": "2026-07-30", "fg": 41.6, "heat": 8.8, "k": 5593.56}, {"d": "2026-07-31", "fg": 40.7, "heat": 15.8, "k": 6595.45}, {"d": "2026-08-03", "fg": 46.4, "heat": 20.7, "k": 6257.45}, {"d": "2026-08-04", "fg": 50.8, "heat": 29.9, "k": 6358.95}, {"d": "2026-08-05", "fg": 54.2, "heat": 31.5, "k": 6598.26}, {"d": "2026-08-06", "fg": 56.4, "heat": 33.3, "k": 6296.38}, {"d": "2026-08-07", "fg": 66.5, "heat": 40.1, "k": 6258.77}, {"d": "2026-08-10", "fg": 67.4, "heat": 41.6, "k": 6299.66}, {"d": "2026-08-11", "fg": 70.5, "heat": 43.8, "k": 6345.53}, {"d": "2026-08-12", "fg": 70.7, "heat": 41.2, "k": 6579.04}, {"d": "2026-08-13", "fg": 60.3, "heat": 44.1, "k": 6813.34}, {"d": "2026-08-14", "fg": 71.1, "heat": 49.1, "k": 6977.94}, {"d": "2026-08-18", "fg": 61.8, "heat": 57.7, "k": 6869.83}, {"d": "2026-08-19", "fg": 59.2, "heat": 50.8, "k": 6471.17}, {"d": "2026-08-20", "fg": 61.0, "heat": 56.9, "k": 6852.58}, {"d": "2026-08-21", "fg": 55.3, "heat": 44.0, "k": 6912.95}, {"d": "2026-08-24", "fg": 58.5, "heat": 47.5, "k": 6696.96}, {"d": "2026-08-25", "fg": 60.1, "heat": 47.4, "k": 6742.74}, {"d": "2026-08-26", "fg": 62.7, "heat": 51.1, "k": 6808.21}, {"d": "2026-08-27", "fg": 63.2, "heat": 57.5, "k": 6912.37}, {"d": "2026-08-28", "fg": 67.5, "heat": 57.0, "k": 6788.88}, {"d": "2026-08-31", "fg": 68.4, "heat": 45.3, "k": 6820.02}, {"d": "2026-09-01", "fg": 65.7, "heat": 47.2, "k": 6835.8}, {"d": "2026-09-02", "fg": 49.8, "heat": 33.3, "k": 6562.72}, {"d": "2026-09-03", "fg": 49.3, "heat": 29.3, "k": 6579.48}, {"d": "2026-09-04", "fg": 49.4, "heat": 32.7, "k": 6687.21}, {"d": "2026-09-07", "fg": 58.1, "heat": 41.2, "k": 6995.39}, {"d": "2026-09-08", "fg": 54.8, "heat": 46.9, "k": 6954.52}, {"d": "2026-09-09", "fg": 57.2, "heat": 45.5, "k": 7051.64}, {"d": "2026-09-10", "fg": 54.3, "heat": 46.7, "k": 7033.92}, {"d": "2026-09-11", "fg": 46.0, "heat": 44.2, "k": 6909.91}, {"d": "2026-09-14", "fg": 45.2, "heat": 34.1, "k": 6684.37}, {"d": "2026-09-15", "fg": 47.6, "heat": 31.8, "k": 6627.26}, {"d": "2026-09-16", "fg": 46.2, "heat": 33.4, "k": 6717.97}, {"d": "2026-09-17", "fg": 45.6, "heat": 34.0, "k": 6715.41}, {"d": "2026-09-18", "fg": 49.0, "heat": 37.2, "k": 6894.23}, {"d": "2026-09-21", "fg": 45.0, "heat": 39.6, "k": 7007.72}, {"d": "2026-09-23", "fg": 54.3, "heat": 46.8, "k": 7092.43}], "reading": {"title": "중립 구간", "text": "두 지수 중 하나 이상이 중립대에 있어 방향성 판단을 유보합니다. 개별 종목 스코어링 결과에 더 비중을 두는 구간입니다."}};
+document.getElementById("upd").textContent = D.updated || "";
+const FGC = ["#c0392b","#e57368","#8a8f98","#5aa634","#1f7a3a"], HTC = ["#2f6fb3","#6aa3d8","#8a8f98","#e59a5c","#c0392b"];
+const FGL = ["극단적 공포","공포","중립","탐욕","극단적 탐욕"], HTL = ["냉각","낮음","보통","높음","과열"];
+const band = v => v<25?0:v<45?1:v<55?2:v<75?3:4;
+function gauge(v, colors){
+  const cx=150, cy=140, R=120, r=88;
+  const a=t=>Math.PI*(1-t);
+  const arc=(t0,t1,c)=>{const x0=cx+R*Math.cos(a(t0)),y0=cy-R*Math.sin(a(t0)),x1=cx+R*Math.cos(a(t1)),y1=cy-R*Math.sin(a(t1));
+    const xi=cx+r*Math.cos(a(t1)),yi=cy-r*Math.sin(a(t1)),xj=cx+r*Math.cos(a(t0)),yj=cy-r*Math.sin(a(t0));
+    return `<path d="M${x0},${y0} A${R},${R} 0 0 1 ${x1},${y1} L${xi},${yi} A${r},${r} 0 0 0 ${xj},${yj} Z" fill="${c}"/>`;};
+  const segs=[[0,.25],[.25,.45],[.45,.55],[.55,.75],[.75,1]].map((s,i)=>arc(s[0]+.003,s[1]-.003,colors[i])).join("");
+  const tick=(t,txt)=>`<text x="${cx+(R+16)*Math.cos(a(t))}" y="${cy-(R+16)*Math.sin(a(t))+4}" text-anchor="middle" font-size="12" fill="#8a8f98">${txt}</text>`;
+  const v01=Math.max(0,Math.min(100,v||0))/100, nx=cx+(r-6)*Math.cos(a(v01)), ny=cy-(r-6)*Math.sin(a(v01));
+  return `<svg class="g" viewBox="0 0 300 160">${segs}${tick(0,"0")}${tick(.25,"25")}${tick(.5,"50")}${tick(.75,"75")}${tick(1,"100")}
+    <line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="#1b1f27" stroke-width="4" stroke-linecap="round"/><circle cx="${cx}" cy="${cy}" r="7" fill="#1b1f27"/></svg>`;
+}
+const fmt=v=>v===null||v===undefined?"-":Math.round(v);
+const usf = (D.us&&D.us.fng)||null;
+const usNow = usf? usf.score : null;
+const cards=[
+  {t:"공포·탐욕 지수 (한국)", c:"시장 심리 · 저점 탐지형 · 자체 산출", v:D.fg?D.fg.now:null, col:FGC, lab:FGL},
+  {t:"Fear & Greed Index (미국)", c:"CNN Business · 미국 시장 심리", v:usNow, col:FGC, lab:FGL},
+  {t:"과열도 지수 (한국)", c:"상승 과열 · 고점 탐지형 · 자체 산출", v:D.heat?D.heat.now:null, col:HTC, lab:HTL},
+];
+document.getElementById("gauges").innerHTML = cards.map(k=>{
+  if(k.v===null||k.v===undefined) return `<div class="card"><h3>${k.t}</h3><div class="cap">${k.c}</div><div class="big" style="color:var(--muted);font-size:16px;padding:60px 0">데이터 없음</div></div>`;
+  const b=band(k.v);
+  return `<div class="card"><h3>${k.t}</h3><div class="cap">${k.c}</div>${gauge(k.v,k.col)}<div class="big" style="color:${k.col[b]}">${Math.round(k.v)}</div><div class="lbl" style="color:${k.col[b]}">${k.lab[b]}</div>
+   <div class="leg">${k.lab.map((l,i)=>`<span><i style="background:${k.col[i]}"></i>${l}</span>`).join("")}</div></div>`;
+}).join("");
+
+const pill=(v,col,lab)=> v===null||v===undefined?"-":`<b>${Math.round(v)}</b><span class="pill" style="background:${col[band(v)]}">${lab[band(v)]}</span>`;
+const rows=[["현재",D.fg?.now,usNow,D.heat?.now],["전일",D.fg?.prev,usf?.prev_close,D.heat?.prev],["1주 전",D.fg?.week,usf?.week_ago,D.heat?.week],["1개월 전",D.fg?.month,usf?.month_ago,D.heat?.month]];
+document.querySelector("#histTbl tbody").innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td>${pill(r[1],FGC,FGL)}</td><td>${pill(r[2]&&r[2]!==0?r[2]:null,FGC,FGL)}</td><td>${pill(r[3],HTC,HTL)}</td></tr>`).join("");
+
+const S=D.stats||{};
+const sg=(v)=>v===null||v===undefined?"":`<span class="${v>0?'pos':'neg'}" style="font-size:12px">${v>0?'▲':'▼'} ${Math.abs(v).toFixed(2)}%</span>`;
+document.getElementById("stats").innerHTML=[
+  ["KOSPI",S.kospi?S.kospi.toLocaleString():"-",sg(S.kospi_chg)],["KOSDAQ",S.kosdaq?S.kosdaq.toLocaleString():"-",sg(S.kosdaq_chg)],
+  ["52주 신고가",S.new_high??"-","종목"],["52주 신저가",S.new_low??"-","종목"],
+  ["20일 상승종목",S.adv_ratio_20d!=null?S.adv_ratio_20d+"%":"-",""],["20일선 상회",S.above_ma20!=null?S.above_ma20+"%":"-",""],
+].map(x=>`<div><div class="k">${x[0]}</div><div class="v">${x[1]}</div><div style="font-size:11.5px;color:var(--muted)">${x[2]}</div></div>`).join("");
+const R=D.reading||{};
+document.getElementById("reading").innerHTML=`<b>참고 판독 — ${R.title||"데이터 없음"}</b><p>${R.text||""}</p><small>두 지수의 조합에 따른 일반적 해석이며 투자 권유가 아닙니다.</small>`;
+
+function comp(id, list, colors){
+  document.querySelector(`#${id} tbody`).innerHTML=(list||[]).map(c=>{const v=c.score; const col=v===null?"#8a8f98":colors[band(v)];
+    return `<tr><td style="width:36%">${c.name}</td><td><div class="bar"><i style="width:${Math.max(0,Math.min(100,v||0))}%;background:${col}"></i></div></td><td style="width:60px;font-weight:700;color:${col}">${fmt(v)}</td></tr>`;}).join("");
+}
+comp("fgComp", D.fg?.components, FGC); comp("heatComp", D.heat?.components, HTC);
+
+// 1년 차트
+(function(){
+  const H=D.history||[]; const svg=document.getElementById("chart"); if(H.length<5){svg.outerHTML='<div class="cap">히스토리가 누적되면 표시됩니다.</div>';return;}
+  const W=900,Ht=300,L=40,Rt=60,T=16,B=30, w=W-L-Rt, h=Ht-T-B;
+  const x=i=>L+i/(H.length-1)*w, y=v=>T+(1-v/100)*h;
+  const ks=H.map(p=>p.k).filter(v=>v!=null); const kmin=Math.min(...ks), kmax=Math.max(...ks);
+  const yk=v=>T+(1-(v-kmin)/((kmax-kmin)||1))*h;
+  const path=(key,fn)=>H.map((p,i)=>p[key]==null?null:`${i&&H[i-1][key]!=null?'L':'M'}${x(i).toFixed(1)},${fn(p[key]).toFixed(1)}`).filter(Boolean).join(" ");
+  const bands=[[0,25,"#c0392b"],[25,45,"#e57368"],[55,75,"#5aa634"],[75,100,"#1f7a3a"]].map(b=>`<rect x="${L}" y="${y(b[1])}" width="${w}" height="${y(b[0])-y(b[1])}" fill="${b[2]}" opacity=".07"/>`).join("");
+  const grid=[0,25,50,75,100].map(v=>`<line x1="${L}" x2="${L+w}" y1="${y(v)}" y2="${y(v)}" stroke="#d8dce3" stroke-dasharray="3 3"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="#8a8f98">${v}</text>`).join("");
+  const step=Math.max(1,Math.floor(H.length/8));
+  const xl=H.map((p,i)=>i%step===0?`<text x="${x(i)}" y="${Ht-10}" text-anchor="middle" font-size="11" fill="#8a8f98">${p.d.slice(2,7).replace('-','.')}</text>`:"").join("");
+  const kl=[kmin,kmax].map(v=>`<text x="${L+w+6}" y="${yk(v)+4}" font-size="11" fill="#8a8f98">${Math.round(v).toLocaleString()}</text>`).join("");
+  svg.innerHTML=`${bands}${grid}${xl}${kl}<path d="${path('k',yk)}" fill="none" stroke="#9aa5b5" stroke-width="1.5"/><path d="${path('heat',y)}" fill="none" stroke="#2f6fb3" stroke-width="2"/><path d="${path('fg',y)}" fill="none" stroke="#e8621f" stroke-width="2.5"/>`;
+})();
+</script>
+</body>
+</html>
