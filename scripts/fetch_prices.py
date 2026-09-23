@@ -43,6 +43,16 @@ def fetch_all_prices(universe: pd.DataFrame):
             except Exception as ex:
                 print(f"[가격] {m} 지수 조회 실패: {ex}")
 
+    # 원/달러 1년치 (공포·탐욕 구성지표용)
+    try:
+        import yfinance as yf
+        h = yf.Ticker("KRW=X").history(period="1y", interval="1d")
+        if h is not None and len(h) > 30:
+            pd.DataFrame({"날짜": h.index.strftime("%Y-%m-%d"), "종가": h["Close"].values}).to_csv(
+                os.path.join(config.DATA_DIR, "fx_krw.csv"), index=False, encoding="utf-8-sig")
+    except Exception as ex:
+        print(f"[가격] 환율 조회 실패: {ex}")
+
     tickers = universe.loc[~universe["excluded"], "ticker"].tolist()
     print(f"[가격] 대상 {len(tickers)}종목 수집 시작")
     failed = 0
