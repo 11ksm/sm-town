@@ -26,7 +26,7 @@ def _f(x, nd=1):
         return None
 
 
-def build(scores: pd.DataFrame, universe: pd.DataFrame):
+def build(scores: pd.DataFrame, universe: pd.DataFrame, senti: dict = None):
     today = datetime.now(KST).strftime("%Y-%m-%d")
 
     hist = history.load_history()
@@ -58,6 +58,8 @@ def build(scores: pd.DataFrame, universe: pd.DataFrame):
             "r20": _f((r.get("ret_20d") or 0) * 100, 1), "n52": _f((r.get("near_52w") or 0) * 100, 0),
             "streak": int(r["streak"]) if pd.notna(r.get("streak")) else 0,
             "ev": r.get("event_label") if isinstance(r.get("event_label"), str) else None,
+            "evamt": _f((r.get("event_amount") or 0) / 1e8, 0) if pd.notna(r.get("event_amount")) else None,
+            "evpct": _f(r.get("event_cap_pct"), 2) if pd.notna(r.get("event_cap_pct")) else None,
             "opg": _f(r.get("op_growth")), "per": _f(r.get("per")), "cr": _f(r.get("credit_ratio"), 2),
             "sr": int(r["sector_rank"]) if pd.notna(r.get("sector_rank")) else None,
             "ss": int(r["sector_size"]) if pd.notna(r.get("sector_size")) else None,
@@ -96,6 +98,7 @@ def build(scores: pd.DataFrame, universe: pd.DataFrame):
         "perf": perf,
         "snapshots": snapshots,
         "us": us,
+        "senti": {"fg": senti.get("fg"), "heat": senti.get("heat"), "date": senti.get("date")} if senti else None,
     }
 
     with open(TEMPLATE, encoding="utf-8") as f:
@@ -108,4 +111,78 @@ def build(scores: pd.DataFrame, universe: pd.DataFrame):
     with open(os.path.join(config.STATE_DIR, "latest.json"), "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False)
     open(os.path.join(config.DOCS_DIR, ".nojekyll"), "a").close()
+
+    # ---- 서브페이지: 시장심리 ----
+    try:
+        sp = {"updated": payload["updated"], "us": us, **(senti or {})}
+        with open(os.path.join(ROOT, "templates", "sentiment.html"), encoding="utf-8") as f:
+            t = f.read()
+        with open(os.path.join(config.DOCS_DIR, "sentiment.html"), "w", encoding="utf-8") as f:
+            f.write(t.replace("__DATA__", json.dumps(sp, ensure_ascii=False)))
+        print("[사이트] sentiment.html 생성")
+    except Exception as e:
+        print(f"[사이트] sentiment.html 생성 실패: {e}")
+
+    # ---- 서브페이지: 자사주 CHECK ----
+    try:
+        bp = build_buyback_payload(scores, universe)
+        bp["updated"] = payload["updated"]
+        with open(os.path.join(ROOT, "templates", "buyback.html"), encoding="utf-8") as f:
+            t = f.read()
+        with open(os.path.join(config.DOCS_DIR, "buyback.html"), "w", encoding="utf-8") as f:
+            f.write(t.replace("__DATA__", json.dumps(bp, ensure_ascii=False)))
+        print(f"[사이트] buyback.html 생성 ({bp['total']}건)")
+    except Exception as e:
+        print(f"[사이트] buyback.html 생성 실패: {e}")
+
+
+def build_buyback_payload(scores: pd.DataFrame, universe: pd.DataFrame) -> dict:
+    db_path = os.path.join(config.STATE_DIR, "buyback_db.csv")
+    if not os.path.exists(db_path):
+        return {"total": 0, "rows": [], "monthly": [], "summary": {}, "pending": 0}
+    db = pd.read_csv(db_path, dtype={"rcept_no": str, "stock_code": str, "rcept_dt": str, "corp_code": str})
+    db["amount"] = pd.to_numeric(db["amount"], errors="coerce")
+    db["shares"] = pd.to_numeric(db["shares"], errors="coerce")
+    db["corrected"] = db["corrected"].astype(str).str.lower().eq("true")
+    cap = universe.set_index("ticker")["market_cap"] if universe is not None else pd.Series(dtype=float)
+    mk = universe.set_index("ticker")["market"] if universe is not None else pd.Series(dtype=str)
+    sc = scores.set_index("ticker") if scores is not None and not scores.empty else pd.DataFrame()
+    db["cap_pct"] = db["amount"] / db["stock_code"].map(cap).replace(0, np.nan) * 100
+    db["month"] = db["rcept_dt"].str[:6]
+
+    today = datetime.now(KST)
+    six = (today - timedelta(days=182)).strftime("%Y%m%d")
+    base = db[(~db["corrected"]) & (db["rcept_dt"] >= six)]
+    def summ(kinds):
+        x = base[base["kind"].isin(kinds)]
+        return {"amount": float(x["amount"].fillna(0).sum()), "count": int(len(x)), "corps": int(x["stock_code"].nunique()),
+                "no_amount": int(x["amount"].isna().sum())}
+    summary = {"acquire": summ(["취득(직접)", "취득(신탁)"]), "cancel": summ(["소각"]), "dispose": summ(["처분"]),
+               "cancel_trust": summ(["신탁해지"]), "corps_total": int(base[base["kind"].isin(["취득(직접)", "취득(신탁)", "소각"])]["stock_code"].nunique())}
+
+    monthly = []
+    nc = db[~db["corrected"]]
+    for m, g in nc.groupby("month"):
+        monthly.append({"m": m, "acq_amt": float(g[g["kind"].isin(["취득(직접)", "취득(신탁)"])]["amount"].fillna(0).sum()),
+                        "acq_n": int((g["kind"].isin(["취득(직접)", "취득(신탁)"])).sum()),
+                        "can_amt": float(g[g["kind"] == "소각"]["amount"].fillna(0).sum()), "can_n": int((g["kind"] == "소각").sum()),
+                        "dis_amt": float(g[g["kind"] == "처분"]["amount"].fillna(0).sum()), "dis_n": int((g["kind"] == "처분").sum())})
+    monthly = sorted(monthly, key=lambda x: x["m"])[-13:]
+
+    rows = []
+    for _, r in db.sort_values("rcept_dt", ascending=False).iterrows():
+        t = r["stock_code"]
+        rows.append({"no": r["rcept_no"], "d": r["rcept_dt"], "t": t, "n": r["corp_name"], "k": r["kind"], "fix": bool(r["corrected"]),
+                     "amt": _f(r["amount"] / 1e8, 1) if pd.notna(r["amount"]) else None,
+                     "shr": _f(r["shares"], 0) if pd.notna(r["shares"]) else None,
+                     "pct": _f(r["cap_pct"], 2) if pd.notna(r["cap_pct"]) else None,
+                     "pp": r["purpose"] if isinstance(r["purpose"], str) else None,
+                     "ps": str(r["period_start"]) if pd.notna(r["period_start"]) else None,
+                     "pe": str(r["period_end"]) if pd.notna(r["period_end"]) else None,
+                     "m": mk.get(t), "cap": _f(cap.get(t, 0) / 1e8, 0) if t in cap.index else None,
+                     "rank": int(sc.at[t, "rank"]) if t in sc.index else None,
+                     "total": _f(sc.at[t, "total"]) if t in sc.index else None})
+    return {"total": int(len(db)), "rows": rows, "monthly": monthly, "summary": summary,
+            "pending": int((db["detail_ok"].astype(str).str.lower() != "true").sum()),
+            "since": db["rcept_dt"].min() if len(db) else None}
     print(f"[사이트] docs/index.html 생성 ({len(rows)}종목 내장, 신규포착 {len(new_picks)}종목)")
