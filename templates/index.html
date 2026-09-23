@@ -11,7 +11,11 @@
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f141c;--card:#171e29;--line:#273140;--text:#e6e9ef;--muted:#98a2b3;--chip:#222b38;--zebra:#1a2230}}
 *{box-sizing:border-box}
 body{margin:0;font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;background:var(--bg);color:var(--text)}
-header{background:var(--navy);color:#fff;padding:18px 16px}
+header{background:var(--navy);color:#fff;padding:14px 16px 12px}
+.topnav{display:flex;gap:4px;margin:10px 0 6px}
+.topnav a{color:#fff;text-decoration:none;padding:7px 13px;font-size:13.5px;border-radius:8px;opacity:.75;border:1px solid rgba(255,255,255,.25)}
+.topnav a.on{background:var(--orange);border-color:var(--orange);opacity:1;font-weight:700}
+.topnav a:hover{opacity:1}
 header h1{margin:0;font-size:19px;display:flex;align-items:center;gap:8px}
 header .sub{font-size:13px;opacity:.75;margin-top:4px}
 .badge{background:var(--orange);color:#fff;font-size:10px;padding:2px 7px;border-radius:9px}
@@ -61,8 +65,9 @@ td.name .sec{display:block;font-size:12px;color:var(--muted);margin-top:2px}
 .bars .bar i{display:block;height:100%;background:var(--orange);border-radius:4px}
 .bars .bar i.ev{background:#7c3aed}.bars .bar i.rk{background:#1f9d55}
 .bars .num{font-weight:600;text-align:right}
-.ev{display:block;max-width:170px;white-space:normal;line-height:1.35;font-size:13.5px;color:#7c3aed;font-weight:800;text-align:left}
-.ev small{display:block;font-size:11px;color:var(--muted);font-weight:400;margin-top:2px}
+.ev{display:block;text-decoration:none;cursor:pointer;max-width:190px;white-space:normal;line-height:1.35;font-size:13.5px;color:#7c3aed;font-weight:800;text-align:left}
+.ev small{display:block;font-size:11.5px;color:var(--muted);font-weight:600;margin-top:2px}
+.ev:hover{text-decoration:underline}
 .empty{padding:30px;text-align:center;color:var(--muted);font-size:13px}
 .hist{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px}
@@ -82,10 +87,15 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:24px}
 .usgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:8px;margin-bottom:14px}
 .idx{background:var(--chip);border-radius:10px;padding:10px 12px}
 .idx .k{font-size:12.5px;color:var(--muted);display:flex;justify-content:space-between}.idx .v{font-size:19px;font-weight:800;margin-top:3px}.idx .c{font-size:14px;font-weight:700;margin-top:1px}
-.usbody{display:grid;grid-template-columns:200px 1fr;gap:22px;align-items:center;border-top:1px solid var(--line);padding-top:14px}
+.usbody{display:grid;grid-template-columns:270px 1fr;gap:22px;align-items:center;border-top:1px solid var(--line);padding-top:14px}
 @media (max-width:640px){.usbody{grid-template-columns:1fr}}
 .fng{text-align:center;background:var(--chip);border-radius:10px;padding:12px 8px 10px}
-.fng .sc{font-size:30px;font-weight:900;margin-top:-4px;line-height:1}.fng .lb{font-size:14px;font-weight:800;margin-top:4px}
+.fwrap{display:flex;gap:6px;justify-content:center}
+.fmini{flex:1;min-width:0}.fmini .ft{font-size:11.5px;color:var(--muted);font-weight:700;margin-bottom:2px}
+.fmini svg{width:100%;max-width:120px;height:auto}
+.flink{display:block;margin-top:8px;font-size:12px;color:var(--orange);text-decoration:none;font-weight:700}
+.flink:hover{text-decoration:underline}
+.fng .sc{font-size:26px;font-weight:900;margin-top:-2px;line-height:1}.fng .lb{font-size:13px;font-weight:800;margin-top:3px}
 .fng .hist{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.5}
 .fng .ttl{font-size:11.5px;color:var(--muted);margin-top:8px}
 .fngt{margin:8px auto 0;border-collapse:collapse;min-width:0;width:auto;font-size:12.5px}
@@ -124,6 +134,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:24px}
 <body>
 <header>
   <h1>KR Stock Radar <span class="badge">수원WM</span></h1>
+  <nav class="topnav"><a class="on" href="index.html">종목 스크리닝</a><a href="sentiment.html">시장심리</a><a href="buyback.html">자사주 CHECK</a></nav>
   <div class="sub">코스피·코스닥 전종목 5축 스코어링 · 매일 07:30 자동 갱신 · 최종 업데이트 <span id="updated"></span></div>
 </header>
 <main>
@@ -272,7 +283,7 @@ function render(){
     <td>${r.streak?`<b>${r.streak}일</b> 연속<span class="sub2">기관+외인 순매수</span>`:`<span style="color:var(--muted)">-</span>`}</td>
     <td>${signed(r.r20)}</td>
     <td>${r.sr?`${r.sr}<span class="sub2">/ ${r.ss}종목</span>`:"-"}</td>
-    <td>${r.ev?`<span class="ev">${evShort(r.ev)}<small>${r.ev}</small></span>`:'<span style="color:var(--muted)">-</span>'}</td>
+    <td>${r.ev?`<a class="ev" href="buyback.html#${r.t}" title="자사주 CHECK에서 이 종목 공시 보기">${evShort(r.ev)}<small>${r.evamt!=null?`${r.evamt>=10000?(r.evamt/10000).toFixed(1)+'조':r.evamt.toLocaleString()+'억'}${r.evpct!=null?` · 시총 ${r.evpct}%`:''}`:r.ev} ›</small></a>`:'<span style="color:var(--muted)">-</span>'}</td>
   </tr>`;}).join("");
 }
 function renderHist(){
@@ -357,8 +368,11 @@ function renderUS(){
   const lab = f? (f.label_ko || {"extreme fear":"극단적 공포","fear":"공포","neutral":"중립","greed":"탐욕","extreme greed":"극단적 탐욕"}[(f.rating||"").toLowerCase()] || "") : "";
   const hist = f? `<table class="fngt">${[["전일",f.prev_close],["1주전",f.week_ago??f.prev_week],["1달전",f.month_ago??f.prev_month]].filter(x=>x[1]!==null&&x[1]!==undefined&&x[1]!==0).map(x=>`<tr><td>${x[0]}</td><td>${x[1]}</td></tr>`).join("")}</table>` : "";
   const col = f? (f.score<=25?"#c0392b":f.score<=45?"#e67e22":f.score<=55?"#7f8c8d":f.score<=75?"#5aa634":"#1f9d55") : "";
-  const fng = f? `<div class="fng">${fngGauge(f.score)}<div class="sc" style="color:${col}">${f.score}</div><div class="lb" style="color:${col}">${lab}</div>${hist?`<div class="hist">${hist}</div>`:""}<div class="ttl">CNN 공포·탐욕지수</div></div>`
-               : `<div class="fng" style="color:var(--muted);font-size:13px;padding:24px 8px">공포·탐욕지수<br>수집 실패</div>`;
+  const K = D.senti && D.senti.fg ? D.senti.fg : null;
+  const kcol = K? (K.now<=25?"#c0392b":K.now<=45?"#e67e22":K.now<=55?"#7f8c8d":K.now<=75?"#5aa634":"#1f9d55") : "";
+  const mini = (title, score, color, labelTxt) => score===null||score===undefined ? `<div class="fmini"><div class="ft">${title}</div><div style="color:var(--muted);font-size:12px;padding:18px 0">데이터 없음</div></div>`
+      : `<div class="fmini"><div class="ft">${title}</div>${fngGauge(score)}<div class="sc" style="color:${color}">${Math.round(score)}</div><div class="lb" style="color:${color}">${labelTxt}</div></div>`;
+  const fng = `<div class="fng"><div class="fwrap">${mini("한국 공포·탐욕", K?K.now:null, kcol, K?K.label:"")}${mini("미국 F&G (CNN)", f?f.score:null, col, lab)}</div><a class="flink" href="sentiment.html">과열도 · 구성지표 · 1년 히스토리 보기 ›</a></div>`;
   const rv = Array.isArray(U.review)?U.review:String(U.review||"").split(/(?<=\.)\s+/).filter(Boolean);
   const em = t => t.replace(/^([^—]+?)(\s—\s)/, "<b>$1</b>$2").replace(/([+-]\d+\.\d+%|[+-]\d+bp)/g, m=>`<b class="${m.startsWith('-')?'neg':'pos'}">${m}</b>`);
   const heads = "";
