@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>자사주 CHECK · KR Stock Radar</title>
+<style>
+:root{--navy:#0b1f3a;--orange:#e8621f;--blue:#1f4e8c;--red:#c0392b;--bg:#f4f6f9;--card:#fff;--line:#e3e7ee;--text:#1b1f27;--muted:#6b7280;--chip:#eef1f6;--zebra:#fafbfd}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f141c;--card:#171e29;--line:#273140;--text:#e6e9ef;--muted:#98a2b3;--chip:#222b38;--zebra:#1a2230}}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;background:var(--bg);color:var(--text)}
+header{background:var(--navy);color:#fff;padding:14px 16px 0}
+.brand{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.brand h1{margin:0;font-size:19px}
+.badge{background:var(--orange);color:#fff;font-size:10px;padding:2px 7px;border-radius:9px}
+.sub{font-size:12.5px;opacity:.75}
+nav{display:flex;gap:4px;margin-top:12px}
+nav a{color:#fff;text-decoration:none;padding:9px 14px;font-size:14px;border-radius:8px 8px 0 0;opacity:.75}
+nav a.on{background:var(--bg);color:var(--text);opacity:1;font-weight:700}
+main{max-width:1100px;margin:0 auto;padding:14px 12px}
+h2.t{font-size:26px;margin:6px 0 4px}h2.t span{color:var(--orange)}
+.lead{color:var(--muted);font-size:14px;margin:0 0 12px}
+.info{background:var(--chip);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--muted);margin-bottom:12px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+.kpi{border-left:5px solid var(--orange)}
+.kpi.b{border-left-color:var(--blue)}.kpi.r{border-left-color:var(--red)}
+.kpi .k{font-size:13px;color:var(--muted)}.kpi .v{font-size:34px;font-weight:900;margin-top:4px;line-height:1.1}
+.kpi .v small{font-size:14px;color:var(--muted);font-weight:600;margin-left:6px}
+.kpi .s{font-size:12.5px;color:var(--muted);margin-top:6px}
+.sec{margin-top:14px}
+.sec h3{margin:0 0 8px;font-size:16px}.sec h3 small{color:var(--muted);font-weight:400;font-size:12px;margin-left:8px}
+.chart{width:100%;height:auto;display:block}
+.leg{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:6px;flex-wrap:wrap}
+.leg i{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:-1px;margin-right:4px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0 8px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:var(--card);color:var(--text);padding:8px 11px;font-size:12.5px;cursor:pointer}
+.seg button.on{background:var(--orange);color:#fff}
+.filters input{flex:1;min-width:160px;border:1px solid var(--line);background:var(--card);color:var(--text);padding:8px 10px;border-radius:8px;font-size:13px}
+.wrap{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:12px}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:900px}
+th,td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
+th{background:var(--chip);color:var(--muted);font-size:12px;position:sticky;top:0}
+tbody tr:nth-child(even){background:var(--zebra)}
+tr.hl{background:#fff3e8 !important;outline:2px solid var(--orange)}
+td.n{text-align:left;font-weight:700}td.n a{color:inherit;text-decoration:none}td.n a:hover{color:var(--orange)}
+td.n small{display:block;font-weight:400;color:var(--muted);font-size:11px}
+.kind{display:inline-block;padding:2px 8px;border-radius:9px;font-size:11.5px;font-weight:700;color:#fff}
+.k-a{background:var(--orange)}.k-c{background:var(--blue)}.k-d{background:var(--red)}.k-t{background:#8a8f98}
+.fix{font-size:10.5px;color:var(--muted);margin-left:4px}
+.amt{font-weight:800;font-size:14px}
+.pct{font-size:11.5px;color:var(--muted)}
+.pp{max-width:200px;white-space:normal;text-align:left;font-size:12px;color:var(--muted)}
+.dart{font-size:11.5px;color:var(--blue);text-decoration:none}
+.focus{background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:12px 14px;margin:0 0 12px;display:none}
+.focus b{font-size:16px}.focus .x{float:right;cursor:pointer;color:var(--muted)}
+.note{background:#fff7ed;border:1px solid #fed7aa;color:#7c4a1e;border-radius:8px;padding:9px 12px;font-size:12.5px;line-height:1.5;margin-top:12px}
+footer{text-align:center;color:var(--muted);font-size:11px;padding:24px}
+.more{display:block;width:100%;border:0;background:var(--chip);color:var(--text);padding:10px;cursor:pointer;font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><h1>KR Stock Radar</h1><span class="badge">수원WM</span><span class="sub">최종 업데이트 <span id="upd"></span></span></div>
+  <nav><a href="index.html">종목 스크리닝</a><a href="sentiment.html">시장심리</a><a class="on" href="buyback.html">자사주 CHECK</a></nav>
+</header>
+<main>
+  <h2 class="t">자사주 <span>CHECK</span></h2>
+  <p class="lead">자기주식 취득 · 소각 · 처분 결정 공시 트래커 — 금액·시총 대비 비율·목적·기간, 월별 규모, 종목별 이력 <span id="meta" style="color:var(--muted)"></span></p>
+  <div class="info" id="pending" style="display:none"></div>
+  <div class="focus" id="focus"></div>
+
+  <div class="cards" id="kpis"></div>
+
+  <div class="card sec">
+    <h3>월별 공시 규모<small>취득 결정 금액(직접+신탁) · 소각 예정 금액 · 처분 예정 금액 · 정정 공시 제외 · 막대 위 숫자는 건수</small></h3>
+    <svg id="chart" class="chart" viewBox="0 0 900 280"></svg>
+    <div class="leg"><span><i style="background:var(--orange)"></i>취득 결정</span><span><i style="background:var(--blue)"></i>소각</span><span><i style="background:var(--red)"></i>처분</span></div>
+  </div>
+
+  <div class="filters">
+    <div class="seg" id="kf"><button data-v="" class="on">전체</button><button data-v="취득">취득</button><button data-v="소각">소각</button><button data-v="처분">처분</button><button data-v="신탁해지">신탁해지</button></div>
+    <div class="seg" id="pf"><button data-v="180" class="on">최근 6개월</button><button data-v="30">최근 1개월</button><button data-v="0">전체</button></div>
+    <label style="font-size:12.5px;color:var(--muted)"><input type="checkbox" id="bigOnly" style="vertical-align:-2px"> 시총 1% 이상만</label>
+    <input id="q" placeholder="종목명 / 코드 검색">
+  </div>
+  <div class="wrap">
+    <table><thead><tr><th>공시일</th><th>종목</th><th>유형</th><th>금액(억)</th><th>시총 대비</th><th>주식수</th><th>목적</th><th>기간</th><th>스코어 순위</th><th>원문</th></tr></thead><tbody id="tb"></tbody></table>
+    <button class="more" id="more" style="display:none">더 보기</button>
+  </div>
+  <div class="note">공시 금액은 결정 시점의 예정 금액이며 실제 취득·소각과 다를 수 있습니다. 취득 목적이 '임직원 보상·주식매수선택권'인 경우 주가 영향이 제한적일 수 있습니다. 본 페이지는 참고 자료이며 투자 권유가 아닙니다.</div>
+</main>
+<footer>KR Stock Radar · 자료: DART 전자공시 (금융감독원)</footer>
+<script>
+const D = __DATA__;
+document.getElementById("upd").textContent = D.updated || "";
+if(D.since) document.getElementById("meta").textContent = `· 공시 ${D.total.toLocaleString()}건 (${D.since.slice(0,4)}-${D.since.slice(4,6)}-${D.since.slice(6,8)} ~)`;
+if(D.pending>0){const p=document.getElementById("pending"); p.style.display=""; p.textContent=`과거 공시의 금액·상세 수집이 진행 중입니다 (미수집 ${D.pending.toLocaleString()}건). 매일 자동 실행에서 이어서 채워집니다.`;}
+const won=v=>{ if(v===null||v===undefined) return "-"; if(v>=10000) return (v/10000).toFixed(2)+"조"; return Math.round(v).toLocaleString()+"억"; };
+const S=D.summary||{}; const A=S.acquire||{},C=S.cancel||{},P=S.dispose||{};
+document.getElementById("kpis").innerHTML=`
+<div class="card kpi"><div class="k">취득 결정 (직접+신탁) · 최근 6개월</div><div class="v">${won(A.amount/1e8)}<small>${A.count||0}건</small></div><div class="s">${S.corps_total||0}개 기업이 취득·소각 공시${A.no_amount?` · 금액 미수집 ${A.no_amount}건`:""}</div></div>
+<div class="card kpi b"><div class="k">소각 결정 · 최근 6개월</div><div class="v">${won(C.amount/1e8)}<small>${C.count||0}건</small></div><div class="s">${A.amount?`취득 대비 ${Math.round(C.amount/A.amount*100)}%`:""}${C.no_amount?` · 금액 미수집 ${C.no_amount}건`:""}</div></div>
+<div class="card kpi r"><div class="k">처분 결정 (물량 출회) · 최근 6개월</div><div class="v">${won(P.amount/1e8)}<small>${P.count||0}건</small></div><div class="s">${A.amount?`취득 대비 ${Math.round(P.amount/A.amount*100)}%`:""}</div></div>`;
+
+// 월별 차트
+(function(){
+  const M=D.monthly||[]; const svg=document.getElementById("chart"); if(!M.length){svg.outerHTML='<div class="info">데이터가 누적되면 표시됩니다.</div>';return;}
+  const W=900,H=280,L=56,R=10,T=20,B=34,w=W-L-R,h=H-T-B; const n=M.length, gw=w/n, bw=Math.min(22,gw/4);
+  const mx=Math.max(1,...M.map(m=>Math.max(m.acq_amt,m.can_amt,m.dis_amt)))/1e8;
+  const y=v=>T+h-(v/mx)*h;
+  const grid=[0,.25,.5,.75,1].map(f=>`<line x1="${L}" x2="${L+w}" y1="${y(mx*f)}" y2="${y(mx*f)}" stroke="#d8dce3" stroke-dasharray="3 3"/><text x="${L-6}" y="${y(mx*f)+4}" text-anchor="end" font-size="11" fill="#8a8f98">${won(mx*f).replace(/\.\d+/,'')}</text>`).join("");
+  const bars=M.map((m,i)=>{const cx=L+gw*i+gw/2; const b=(v,c,off,cnt)=>{const vv=v/1e8; const yy=y(vv); return `<rect x="${cx+off-bw/2}" y="${yy}" width="${bw}" height="${Math.max(1.5,T+h-yy)}" fill="${c}" rx="2"><title>${won(vv)} · ${cnt}건</title></rect><text x="${cx+off}" y="${yy-4}" text-anchor="middle" font-size="10.5" fill="#6b7280">${cnt||""}</text>`;};
+    return b(m.acq_amt,"#e8621f",-bw-2,m.acq_n)+b(m.can_amt,"#1f4e8c",0,m.can_n)+b(m.dis_amt,"#c0392b",bw+2,m.dis_n)+`<text x="${cx}" y="${H-12}" text-anchor="middle" font-size="11.5" fill="#6b7280">${m.m.slice(2,4)}.${m.m.slice(4,6)}</text>`;}).join("");
+  svg.innerHTML=grid+bars;
+})();
+
+// 표
+let st={k:"",p:180,q:"",big:false,lim:60};
+const kc={"취득(직접)":"k-a","취득(신탁)":"k-a","소각":"k-c","처분":"k-d","신탁해지":"k-t"};
+const fd=d=>d?`${d.slice(0,4)}.${d.slice(4,6)}.${d.slice(6,8)}`:"";
+const today=new Date(); const cutoff=days=>{const d=new Date(today); d.setDate(d.getDate()-days); return d.toISOString().slice(0,10).replace(/-/g,"");};
+let focusT = (location.hash||"").replace("#","").trim();
+function rows(){
+  let r=D.rows||[];
+  if(focusT) r=r.filter(x=>x.t===focusT);
+  else{
+    if(st.k) r=r.filter(x=>x.k.startsWith(st.k));
+    if(st.p>0){const c=cutoff(st.p); r=r.filter(x=>x.d>=c);}
+    if(st.big) r=r.filter(x=>(x.pct||0)>=1);
+    if(st.q){const q=st.q.toLowerCase(); r=r.filter(x=>(x.n||"").toLowerCase().includes(q)||x.t.includes(q));}
+  }
+  return r;
+}
+function render(){
+  const all=rows(), r=all.slice(0,st.lim);
+  document.getElementById("tb").innerHTML=r.map(x=>`<tr class="${focusT&&x.t===focusT?'hl':''}">
+   <td>${fd(x.d)}</td>
+   <td class="n"><a href="https://finance.naver.com/item/main.naver?code=${x.t}" target="_blank" rel="noopener">${x.n}</a><small>${x.t} · ${x.m==="KOSPI"?"코스피":x.m==="KOSDAQ"?"코스닥":""}${x.cap?` · 시총 ${won(x.cap)}`:""}</small></td>
+   <td><span class="kind ${kc[x.k]||'k-t'}">${x.k}</span>${x.fix?'<span class="fix">정정</span>':''}</td>
+   <td>${x.amt!=null?`<span class="amt">${won(x.amt)}</span>`:'<span style="color:var(--muted)">미수집</span>'}</td>
+   <td>${x.pct!=null?`<b>${x.pct}%</b>`:"-"}</td>
+   <td>${x.shr!=null?x.shr.toLocaleString():"-"}</td>
+   <td class="pp">${x.pp||"-"}</td>
+   <td style="font-size:12px;color:var(--muted)">${x.ps?fd(x.ps)+"~":""}${x.pe?fd(x.pe):""}</td>
+   <td>${x.rank?`<b>${x.rank}위</b> <span style="color:var(--muted);font-size:11.5px">${x.total}</span>`:'<span style="color:var(--muted)">-</span>'}</td>
+   <td><a class="dart" href="https://dart.fss.or.kr/dsaf001/main.do?rcpNo=${x.no}" target="_blank" rel="noopener">DART</a></td></tr>`).join("") || `<tr><td colspan="10" style="padding:30px;color:var(--muted)">해당 조건의 공시가 없습니다.</td></tr>`;
+  const mb=document.getElementById("more"); mb.style.display = all.length>st.lim ? "" : "none"; mb.textContent=`더 보기 (${st.lim} / ${all.length})`;
+  const f=document.getElementById("focus");
+  if(focusT){ const first=all[0]; f.style.display=""; f.innerHTML=`<span class="x" id="fx">✕ 전체 보기</span><b>${first?first.n:focusT}</b> <span style="color:var(--muted)">${focusT}</span> — 자사주 관련 공시 ${all.length}건 (최근 1년)`; document.getElementById("fx").onclick=()=>{focusT="";history.replaceState(null,"",location.pathname);render();}; }
+  else f.style.display="none";
+}
+["kf","pf"].forEach(id=>document.getElementById(id).addEventListener("click",e=>{const b=e.target.closest("button"); if(!b) return; st[id==="kf"?"k":"p"]= id==="pf"? +b.dataset.v : b.dataset.v; [...b.parentNode.children].forEach(x=>x.classList.toggle("on",x===b)); st.lim=60; render();}));
+document.getElementById("bigOnly").addEventListener("change",e=>{st.big=e.target.checked; render();});
+document.getElementById("q").addEventListener("input",e=>{st.q=e.target.value.trim(); focusT=""; st.lim=60; render();});
+document.getElementById("more").addEventListener("click",()=>{st.lim+=60; render();});
+window.addEventListener("hashchange",()=>{focusT=(location.hash||"").replace("#","").trim(); render();});
+render();
+</script>
+</body>
+</html>
