@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.join(ROOT, "scripts"))
 
 import config
 import universe as U
-import fetch_prices, fetch_flows, fetch_naver, fetch_dart, fetch_us, scoring, build_site
+import fetch_prices, fetch_flows, fetch_naver, fetch_dart, fetch_us, scoring, sentiment, build_site
 
 
 def step(title, fn, *a, **kw):
@@ -48,7 +48,9 @@ def main():
     if scores is None or scores.empty:
         raise SystemExit("스코어링 실패 - 중단")
 
-    step("10. 사이트 빌드", build_site.build, scores, uni)
+    senti = step("9-1. 시장 심리 지수 (한국 공포·탐욕 / 과열도)", sentiment.compute) or {}
+
+    step("10. 사이트 빌드", build_site.build, scores, uni, senti)
     print("\n=== 완료 ===")
 
 
