@@ -15,7 +15,9 @@ EXCLUDE_KEYWORDS = ["스팩", "SPAC", "우B", "우C"]  # 종목명 키워드 기
 PRICE_LOOKBACK_DAYS = 380     # 52주 신고가 계산용 (달력일)
 INVESTOR_LOOKBACK_DAYS = 20   # 기관/외국인 수급 (거래일)
 SHORT_LOOKBACK_DAYS = 20      # 공매도 거래비중 (거래일)
-BUYBACK_LOOKBACK_DAYS = 30    # 자사주 공시 유효기간 (달력일)
+BUYBACK_LOOKBACK_DAYS = 30    # 자사주 공시 유효기간 (달력일, 스코어링용)
+BUYBACK_DB_DAYS = 365         # 자사주 공시 누적 DB 보관 기간 (자사주 CHECK 페이지)
+BUYBACK_DETAIL_PER_RUN = 250  # 실행당 상세(금액) 보강 건수 - 첫 며칠에 걸쳐 과거분 완성
 CREDIT_RATIO_TOP_K = 300      # 신용비율은 예비 스코어 상위 K종목만 개별 조회 (요청량 절감)
 
 # ===== 가중치 (합계 1.0) =====
@@ -29,7 +31,7 @@ WEIGHTS = {
 
 # ===== 결과/화면 =====
 TOP_N = 25                    # 메인 표 노출 종목 수
-EMBED_N = 1500                # 필터/검색용으로 페이지에 내장할 종목 수
+EMBED_N = 1500                # 필터/검색용으로 페이지에 내장할 종목 수 (1,000억↑ 전 종목 검색 가능)
 NEW_PICK_RANK_JUMP = 20       # "오늘의 신규 포착" 기준: 순위 20계단 이상 급등
 HISTORY_KEEP_DAYS = 120       # 히스토리 보관 일수
 HISTORY_TRACK_N = 100         # 히스토리에 매일 기록할 상위 종목 수
