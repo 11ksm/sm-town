@@ -71,6 +71,8 @@ def fetch_list(bgn: str, end: str) -> pd.DataFrame:
             print(f"[DART] 목록 요청 실패: {e}")
             break
         if r.get("status") != "000":
+            if page == 1:
+                print(f"[DART] 목록 응답 상태 {r.get('status')}: {r.get('message')} (기간 {bgn}~{end})")
             break
         for it in r.get("list", []):
             kind = classify(it.get("report_nm", ""))
@@ -189,6 +191,14 @@ def fetch_buybacks() -> pd.DataFrame:
         last = pd.to_datetime(db["rcept_dt"].max(), format="%Y%m%d", errors="coerce")
         bgn = (last - timedelta(days=3)).strftime("%Y%m%d") if pd.notna(last) else (today - timedelta(days=30)).strftime("%Y%m%d")
     new = fetch_list(bgn, today.strftime("%Y%m%d"))
+    if new.empty and db.empty:
+        # 첫 수집이 실패하면 범위를 줄여 재시도 (DART 조회 한도/기간 제한 대비)
+        for days in (180, 90, 30):
+            bgn2 = (today - timedelta(days=days)).strftime("%Y%m%d")
+            print(f"[DART] 재시도: 최근 {days}일")
+            new = fetch_list(bgn2, today.strftime("%Y%m%d"))
+            if not new.empty:
+                break
     if not new.empty:
         new = new[~new["rcept_no"].isin(db["rcept_no"])]
         new["detail_ok"] = False
