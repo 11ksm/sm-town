@@ -140,15 +140,27 @@ def supply(universe: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def event() -> pd.DataFrame:
+def event(universe: pd.DataFrame = None) -> pd.DataFrame:
     bb = _read("buybacks.csv")
     if bb.empty:
-        return pd.DataFrame(columns=["ticker", "event", "event_label"])
+        return pd.DataFrame(columns=["ticker", "event", "event_label", "event_amount", "event_cap_pct"])
     bb["decay"] = (1 - bb["days_ago"].clip(0, config.BUYBACK_LOOKBACK_DAYS) / config.BUYBACK_LOOKBACK_DAYS).clip(lower=0.4)
-    bb["score"] = bb["event_raw"] * bb["decay"]
+    # 규모 보정: 취득/소각 금액이 시총의 3% 이상이면 1.0, 1~3% 0.85, 1% 미만 0.7, 미확인 0.85
+    bb["amount"] = pd.to_numeric(bb.get("amount"), errors="coerce")
+    cap_pct = pd.Series(np.nan, index=bb.index)
+    if universe is not None:
+        cap = universe.set_index("ticker")["market_cap"]
+        cap_pct = bb["amount"] / bb["ticker"].map(cap).replace(0, np.nan) * 100
+    size = pd.Series(0.85, index=bb.index)
+    size[cap_pct >= 3] = 1.0
+    size[(cap_pct >= 1) & (cap_pct < 3)] = 0.85
+    size[cap_pct < 1] = 0.7
+    bb["cap_pct"] = cap_pct
+    bb["score"] = bb["event_raw"] * bb["decay"] * size
     g = bb.sort_values("score", ascending=False).groupby("ticker").first().reset_index()
     g["event_label"] = g["report_nm"].str.replace("주요사항보고서", "").str.strip("() ")
-    return g[["ticker", "score", "event_label"]].rename(columns={"score": "event"})
+    return g[["ticker", "score", "event_label", "amount", "cap_pct"]].rename(
+        columns={"score": "event", "amount": "event_amount", "cap_pct": "event_cap_pct"})
 
 
 def fundamental() -> pd.DataFrame:
@@ -203,7 +215,7 @@ def risk(price_df: pd.DataFrame) -> pd.DataFrame:
 def compute(universe: pd.DataFrame, preliminary=False) -> pd.DataFrame:
     base = universe[~universe["excluded"]].copy()
     price_df = technical_and_price(universe)
-    parts = [price_df, supply(universe), event(), fundamental(), risk(price_df)]
+    parts = [price_df, supply(universe), event(universe), fundamental(), risk(price_df)]
     for p in parts:
         if not p.empty:
             base = base.merge(p, on="ticker", how="left")
